@@ -13,7 +13,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 <style>
-:root{--paper:#F7F4EF;--card:#FFFFFF;--ink:#1C1B19;--muted:#938C80;--faint:#B8B1A4;--line:#E9E3D9;--line2:#F1ECE3;--income:#3F7D58;--outcome:#C0613B;--transfer:#436B9A;--accent:var(--outcome)}
+:root{--paper:#F7F4EF;--card:#FFFFFF;--ink:#1C1B19;--muted:#938C80;--faint:#B8B1A4;--line:#E9E3D9;--line2:#F1ECE3;--income:#3F7D58;--outcome:#C0613B;--transfer:#436B9A;--debt:#7B5EA7;--accent:var(--outcome)}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{background:var(--paper);color:var(--ink);font-family:'Hanken Grotesk',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
 body{min-height:100dvh;padding:max(22px,env(safe-area-inset-top)) 18px max(30px,env(safe-area-inset-bottom));background-image:radial-gradient(120% 60% at 50% -10%, #FBF9F5 0%, var(--paper) 60%)}
@@ -26,8 +26,8 @@ body{min-height:100dvh;padding:max(22px,env(safe-area-inset-top)) 18px max(30px,
 .tabs button{border:0;background:transparent;font:inherit;font-weight:600;font-size:14px;color:var(--muted);padding:11px;border-radius:9px;cursor:pointer;transition:.18s}
 .tabs button.on{background:var(--card);color:var(--ink);box-shadow:0 2px 7px -3px rgba(40,35,25,.22)}
 .card{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:22px 20px 24px;box-shadow:0 1px 0 #fff inset,0 18px 40px -28px rgba(40,35,25,.28),0 2px 8px -4px rgba(40,35,25,.08)}
-.seg{display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;background:var(--line2);border-radius:13px;padding:4px;margin-bottom:22px}
-.seg button{border:0;background:transparent;font:inherit;font-weight:600;font-size:13.5px;color:var(--muted);padding:9px 4px;border-radius:9px;cursor:pointer;transition:.2s}
+.seg{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;background:var(--line2);border-radius:13px;padding:4px;margin-bottom:22px}
+.seg button{border:0;background:transparent;font:inherit;font-weight:600;font-size:12.5px;color:var(--muted);padding:9px 2px;border-radius:9px;cursor:pointer;transition:.2s}
 .seg button.on{background:var(--accent);color:#fff;box-shadow:0 4px 12px -4px var(--accent)}
 .amt{text-align:center;padding:8px 0 20px}
 .amt .lab{font-size:11.5px;text-transform:uppercase;letter-spacing:.14em;color:var(--muted);font-weight:600;margin-bottom:8px}
@@ -37,6 +37,7 @@ body{min-height:100dvh;padding:max(22px,env(safe-area-inset-top)) 18px max(30px,
 .amt input::placeholder{color:#D8D1C5}
 .fld{margin-bottom:14px}
 .fld label{display:block;font-size:11.5px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);font-weight:600;margin:0 2px 7px}
+.fld .hint{float:right;text-transform:none;letter-spacing:0;color:var(--debt);font-weight:600;font-family:'JetBrains Mono',monospace}
 .fld input[type=text],.fld input[type=date],.fld select{width:100%;font:inherit;font-size:16px;font-weight:500;color:var(--ink);background:#FCFBF8;border:1px solid var(--line);border-radius:13px;padding:13px 14px;outline:0;transition:.18s;-webkit-appearance:none;appearance:none}
 .fld select{background-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="8" fill="none"><path d="M1 1.5 6 6.5 11 1.5" stroke="%23938C80" stroke-width="1.6" stroke-linecap="round"/></svg>');background-repeat:no-repeat;background-position:right 15px center;padding-right:38px}
 .fld input:focus,.fld select:focus{border-color:var(--accent);background:#fff;box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 14%,transparent)}
@@ -114,6 +115,7 @@ body{min-height:100dvh;padding:max(22px,env(safe-area-inset-top)) 18px max(30px,
         <button data-cat="income">Masuk</button>
         <button data-cat="outcome" class="on">Keluar</button>
         <button data-cat="transfer">Transfer</button>
+        <button data-cat="debt">Utang</button>
       </div>
       <div class="amt">
         <div class="lab">Nominal</div>
@@ -121,9 +123,10 @@ body{min-height:100dvh;padding:max(22px,env(safe-area-inset-top)) 18px max(30px,
       </div>
       <div class="fld" id="fromRow"><label id="fromLbl">Dari akun</label><select id="fromSel"></select></div>
       <div class="fld hide" id="toRow"><label id="toLbl">Ke akun</label><select id="toSel"></select></div>
+      <div class="fld hide" id="debtRow"><label>Utang<span class="hint" id="debtHint"></span></label><select id="debtSel"></select></div>
       <div class="fld"><label>Keterangan</label><input id="name" type="text" placeholder="mis. Beli sayur"></div>
       <div class="two">
-        <div class="fld"><label>Segmen</label>
+        <div class="fld" id="segmWrap"><label>Segmen</label>
           <div class="toggle" id="segm"><button data-seg="personal" class="on">Personal</button><button data-seg="usaha">Usaha</button></div></div>
         <div class="fld"><label>Tanggal</label><input id="date" type="date"></div>
       </div>
@@ -170,7 +173,7 @@ var DASH=BASE+'/dashboard-data';
 var OPTS='<optgroup label="Pribadi"><option value="BANK">Bank</option><option value="CASH">Tunai</option><option value="PRIVE">Prive</option></optgroup><optgroup label="Usaha"><option value="VEGGIES">Veggies</option><option value="AGRIEQUIPMENT">Agriequipment</option><option value="VEGGIES_ASET">Veggies · Aset</option><option value="AGRIEQUIPMENT_ASET">Agriequipment · Aset</option></optgroup>';
 var NAMES={BANK:'Bank',CASH:'Tunai',PRIVE:'Prive',VEGGIES:'Veggies',AGRIEQUIPMENT:'Agriequipment',VEGGIES_ASET:'Veggies · Aset',AGRIEQUIPMENT_ASET:'Agriequipment · Aset',EXTERNAL:'Luar'};
 var MON=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
-var cat='outcome', seg='personal', raw=0, tab='catat', loading=false;
+var cat='outcome', seg='personal', raw=0, tab='catat', loading=false, DEBTS=[];
 var $=function(id){return document.getElementById(id)};
 
 function fmt(n){return Number(n).toLocaleString('id-ID')}
@@ -178,33 +181,66 @@ function shortRp(n){var a=Math.abs(n);if(a>=1e9)return (n/1e9).toFixed(1).replac
 function dlabel(s){var p=s.split('-');return parseInt(p[2],10)+' '+MON[parseInt(p[1],10)-1]}
 function setDate(){var d=new Date();var m=String(d.getMonth()+1).padStart(2,'0');var day=String(d.getDate()).padStart(2,'0');$('date').value=d.getFullYear()+'-'+m+'-'+day;$('dateLbl').textContent=day+' '+MON[d.getMonth()]+' '+d.getFullYear()}
 
+function fillDebts(){
+ var s=$('debtSel');var cur=s.value;
+ if(!DEBTS.length){s.innerHTML='<option value="">— belum ada utang —</option>';$('debtHint').textContent='';return}
+ s.innerHTML=DEBTS.map(function(d){return '<option value="'+d.id+'" data-seg="'+(d.segment||'personal')+'">'+d.creditor+'</option>'}).join('');
+ if(cur)s.value=cur;
+ updateDebtHint();
+}
+function updateDebtHint(){
+ var o=$('debtSel').selectedOptions[0];if(!o){$('debtHint').textContent='';return}
+ var d=DEBTS.filter(function(x){return String(x.id)===o.value})[0];
+ $('debtHint').textContent=d?('sisa Rp'+fmt(d.outstanding)):'';
+ if(d&&cat==='debt'){seg=d.segment||'personal';syncSegm()}
+}
+function syncSegm(){var b=$('segm').children;for(var i=0;i<b.length;i++){b[i].className=b[i].getAttribute('data-seg')===seg?'on':''}}
+
 function setCat(c){cat=c;var b=$('seg').children;for(var i=0;i<b.length;i++){b[i].className=b[i].getAttribute('data-cat')===c?'on':''}
- var col=c==='income'?'var(--income)':c==='transfer'?'var(--transfer)':'var(--outcome)';document.documentElement.style.setProperty('--accent',col);
- if(c==='transfer'){$('fromRow').classList.remove('hide');$('toRow').classList.remove('hide');$('fromLbl').textContent='Dari akun';$('toLbl').textContent='Ke akun'}
- else if(c==='income'){$('fromRow').classList.add('hide');$('toRow').classList.remove('hide');$('toLbl').textContent='Ke akun'}
- else{$('fromRow').classList.remove('hide');$('toRow').classList.add('hide');$('fromLbl').textContent='Dari akun'}}
+ var col=c==='income'?'var(--income)':c==='transfer'?'var(--transfer)':c==='debt'?'var(--debt)':'var(--outcome)';
+ document.documentElement.style.setProperty('--accent',col);
+ var fromR=$('fromRow'),toR=$('toRow'),debtR=$('debtRow'),segW=$('segmWrap');
+ toR.classList.add('hide');debtR.classList.add('hide');fromR.classList.remove('hide');segW.style.visibility='visible';
+ if(c==='transfer'){toR.classList.remove('hide');$('fromLbl').textContent='Dari akun';$('toLbl').textContent='Ke akun';$('go').textContent='Catat'}
+ else if(c==='income'){fromR.classList.add('hide');toR.classList.remove('hide');$('toLbl').textContent='Ke akun';$('go').textContent='Catat'}
+ else if(c==='debt'){$('fromLbl').textContent='Bayar dari';debtR.classList.remove('hide');segW.style.visibility='hidden';$('go').textContent='Bayar Utang';fillDebts()}
+ else{$('fromLbl').textContent='Dari akun';$('go').textContent='Catat'}}
 
 function toast(msg,kind){var t=$('toast');$('toastMsg').textContent=msg;t.className='toast show '+(kind||'');setTimeout(function(){t.className='toast '+(kind||'')},2600)}
 function unlock(){var v=$('keyInput').value.trim();if(!v)return;localStorage.setItem(TK,v);boot()}
-function boot(){var t=localStorage.getItem(TK);if(t){$('lock').classList.add('hide');$('app').classList.remove('hide')}else{$('lock').classList.remove('hide');$('app').classList.add('hide')}}
+function boot(){var t=localStorage.getItem(TK);if(t){$('lock').classList.add('hide');$('app').classList.remove('hide');loadDashboard(true)}else{$('lock').classList.remove('hide');$('app').classList.add('hide')}}
 
 function submit(){
  var token=localStorage.getItem(TK);
  if(raw<=0){toast('Nominal harus lebih dari 0','err');return}
- var name=$('name').value.trim();if(!name){toast('Isi keterangan dulu','err');return}
- var from_code,to_code;
- if(cat==='income'){from_code='EXTERNAL';to_code=$('toSel').value}
- else if(cat==='outcome'){from_code=$('fromSel').value;to_code='EXTERNAL'}
- else{from_code=$('fromSel').value;to_code=$('toSel').value;if(from_code===to_code){toast('Akun asal & tujuan sama','err');return}}
- var payload={name:name,amount:raw,category:cat,from_code:from_code,to_code:to_code,segment:seg,note:$('note').value.trim(),occurred_at:$('date').value};
- var go=$('go');go.disabled=true;go.textContent='Menyimpan…';
+ var payload;
+ if(cat==='debt'){
+   var o=$('debtSel').selectedOptions[0];
+   if(!o||!o.value){toast('Pilih utang dulu','err');return}
+   var d=DEBTS.filter(function(x){return String(x.id)===o.value})[0];
+   var nm=$('name').value.trim()||('Bayar '+(d?d.creditor:'utang'));
+   payload={name:nm,amount:raw,category:'outcome',from_code:$('fromSel').value,to_code:'EXTERNAL',
+            segment:(d?d.segment:'personal')||'personal',debt_id:parseInt(o.value,10),
+            note:$('note').value.trim(),occurred_at:$('date').value};
+ } else {
+   var name=$('name').value.trim();if(!name){toast('Isi keterangan dulu','err');return}
+   var from_code,to_code;
+   if(cat==='income'){from_code='EXTERNAL';to_code=$('toSel').value}
+   else if(cat==='outcome'){from_code=$('fromSel').value;to_code='EXTERNAL'}
+   else{from_code=$('fromSel').value;to_code=$('toSel').value;if(from_code===to_code){toast('Akun asal & tujuan sama','err');return}}
+   payload={name:name,amount:raw,category:cat,from_code:from_code,to_code:to_code,segment:seg,note:$('note').value.trim(),occurred_at:$('date').value};
+ }
+ var go=$('go');var lbl=go.textContent;go.disabled=true;go.textContent='Menyimpan…';
  fetch(API,{method:'POST',headers:{'Content-Type':'application/json','x-app-token':token},body:JSON.stringify(payload)})
   .then(function(r){return r.json().then(function(j){return{s:r.status,j:j}})})
-  .then(function(res){go.disabled=false;go.textContent='Catat';
+  .then(function(res){go.disabled=false;go.textContent=lbl;
     if(res.s===401){localStorage.removeItem(TK);boot();toast('Kunci salah, masukkan ulang','err');return}
-    if(res.s>=200&&res.s<300&&res.j&&res.j.ok){toast('Tercatat · '+name+' · Rp'+fmt(raw),'ok');raw=0;$('amt').value='';$('name').value='';$('note').value='';loadDashboard(true)}
-    else{toast((res.j&&res.j.error)?res.j.error:'Gagal menyimpan','err')}})
-  .catch(function(){go.disabled=false;go.textContent='Catat';toast('Jaringan bermasalah','err')})}
+    if(res.s>=200&&res.s<300&&res.j&&res.j.ok){
+      toast('Tercatat · '+payload.name+' · Rp'+fmt(raw),'ok');
+      raw=0;$('amt').value='';$('name').value='';$('note').value='';
+      loadDashboard(true);
+    } else {toast((res.j&&res.j.error)?res.j.error:'Gagal menyimpan','err')}})
+  .catch(function(){go.disabled=false;go.textContent=lbl;toast('Jaringan bermasalah','err')})}
 
 function loadDashboard(force){
  var token=localStorage.getItem(TK);if(!token)return;
@@ -214,7 +250,7 @@ function loadDashboard(force){
   .then(function(r){return r.json().then(function(j){return{s:r.status,j:j}})})
   .then(function(res){loading=false;$('d-refresh').classList.remove('spin');
     if(res.s===401){localStorage.removeItem(TK);boot();return}
-    if(res.s>=200&&res.s<300)renderDash(res.j)})
+    if(res.s>=200&&res.s<300){DEBTS=res.j.debts||[];if(cat==='debt')fillDebts();renderDash(res.j)}})
   .catch(function(){loading=false;$('d-refresh').classList.remove('spin')})}
 
 function renderDash(d){
@@ -286,7 +322,8 @@ function switchTab(t){
 $('fromSel').innerHTML=OPTS;$('toSel').innerHTML=OPTS;$('fromSel').value='BANK';$('toSel').value='CASH';
 setDate();
 $('seg').addEventListener('click',function(e){var c=e.target.getAttribute('data-cat');if(c)setCat(c)});
-$('segm').addEventListener('click',function(e){var s=e.target.getAttribute('data-seg');if(!s)return;seg=s;var b=$('segm').children;for(var i=0;i<b.length;i++){b[i].className=b[i].getAttribute('data-seg')===s?'on':''}});
+$('segm').addEventListener('click',function(e){var s=e.target.getAttribute('data-seg');if(!s)return;seg=s;syncSegm()});
+$('debtSel').addEventListener('change',updateDebtHint);
 $('amt').addEventListener('input',function(e){var d=e.target.value.replace(/[^0-9]/g,'');raw=d?parseInt(d,10):0;e.target.value=raw?fmt(raw):''});
 $('go').addEventListener('click',submit);
 $('unlockBtn').addEventListener('click',unlock);
