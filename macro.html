@@ -184,6 +184,14 @@ body{min-height:100dvh;position:relative;overflow-x:hidden;background:radial-gra
   <button class="save" id="injSave" style="background:var(--blue)">Tambah Modal</button>
 </div></div>
 
+<div class="ov" id="ovPayout"><div class="sheet">
+  <h3>BAGIKAN BAGI HASIL</h3>
+  <div id="poBreak" style="font-size:13px;line-height:1.6;color:var(--muted);margin-bottom:16px"></div>
+  <div style="font-size:11px;color:var(--faint);margin-bottom:7px;text-transform:uppercase;letter-spacing:.05em">Porsi kamu (35%) masuk ke</div>
+  <div class="psel" id="poDest"><button data-src="BANK" class="on">BRI</button><button data-src="CASH">Tunai</button></div>
+  <button class="save" id="poSave" style="background:#34d27b">Bagikan Sekarang</button>
+</div></div>
+
 <div class="toast" id="toast"><span class="dot"></span><span id="toastMsg"></span></div>
 
 <script>
@@ -211,6 +219,7 @@ function load(force){if(loading&&!force)return;loading=true;$('refresh').classLi
  }).catch(function(){loading=false;$('refresh').classList.remove('spin')});}
 
 function render(d){
+ lastD=d;
  var total=(d.cash_field||0)+(d.modal_lapangan||0)+(d.piutang||0)+(d.equipment||0);
  $('h-total').innerHTML='<span class="rp">Rp</span>'+fmt(total);
  $('h-cash').textContent='Rp'+shortRp(d.cash_field||0);
@@ -267,10 +276,16 @@ function render(d){
  var now=new Date();$('updated').textContent='↻ diperbarui '+String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
 }
 
+var lastD={};var poDest='BANK';
 function doPayout(){
- if(!confirm('Bagikan bagi hasil sekarang? Net berjalan akan dicatat sebagai pembagian, lalu akumulasi reset ke 0.'))return;
- var b=$('payBtn');b.disabled=true;b.textContent='Memproses…';
- api(ACT,{action:'payout'}).then(function(res){if(res.j&&res.j.ok){toast('Bagi hasil dicatat · akumulasi direset');load(true)}else{toast('Gagal');b.disabled=false}}).catch(function(){toast('Jaringan bermasalah');b.disabled=false});
+ var d=lastD,net=d.week_net||0;if(net<=0){toast('Belum ada yang dibagi');return}
+ poDest='BANK';var b=$('poDest').children;for(var i=0;i<b.length;i++)b[i].className=b[i].getAttribute('data-src')==='BANK'?'on':'';
+ $('poBreak').innerHTML='Laba bersih <b>Rp'+fmt(net)+'</b><br>• Porsi kamu 35%: <b>Rp'+fmt(d.owner||0)+'</b> — keluar ke akunmu<br>• Reinvest 35%: <b>Rp'+fmt(d.reinvest||0)+'</b> — tetap di kas lapangan<br>• Bonus 2 operator: <b>Rp'+fmt((d.bonus_each||0)*2)+'</b> — keluar dari kas';
+ $('ovPayout').classList.add('show');
+}
+function doPayoutConfirm(){
+ var b=$('poSave');b.disabled=true;b.textContent='Memproses…';
+ api(ACT,{action:'payout',dest_code:poDest}).then(function(res){b.disabled=false;b.textContent='Bagikan Sekarang';if(res.j&&res.j.ok){$('ovPayout').classList.remove('show');toast('Bagi hasil dibagikan · porsimu ke '+(poDest==='BANK'?'BRI':'Tunai'));load(true)}else{toast((res.j&&res.j.error)||'Gagal')}}).catch(function(){b.disabled=false;b.textContent='Bagikan Sekarang';toast('Jaringan bermasalah')});
 }
 
 setDate();
@@ -278,6 +293,9 @@ $('unlockBtn').addEventListener('click',unlock);
 $('keyInput').addEventListener('keydown',function(e){if(e.key==='Enter')unlock()});
 $('refresh').addEventListener('click',function(){load(true)});
 $('payBtn').addEventListener('click',doPayout);
+$('poDest').addEventListener('click',function(e){var s=e.target.getAttribute('data-src');if(s){poDest=s;var b=$('poDest').children;for(var i=0;i<b.length;i++)b[i].className=b[i].getAttribute('data-src')===s?'on':''}});
+$('poSave').addEventListener('click',doPayoutConfirm);
+$('ovPayout').addEventListener('click',function(e){if(e.target===$('ovPayout'))$('ovPayout').classList.remove('show')});
 var injSrc='BANK';
 $('injectBtn').addEventListener('click',function(){$('injAmt').value='';injSrc='BANK';var b=$('injSrc').children;for(var i=0;i<b.length;i++)b[i].className=b[i].getAttribute('data-src')==='BANK'?'on':'';$('ovInject').classList.add('show')});
 $('injSrc').addEventListener('click',function(e){var s=e.target.getAttribute('data-src');if(s){injSrc=s;var b=$('injSrc').children;for(var i=0;i<b.length;i++)b[i].className=b[i].getAttribute('data-src')===s?'on':''}});
