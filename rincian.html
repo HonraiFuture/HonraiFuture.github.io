@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Rincian · Honrai Veggies</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+ --bg:#0a0d12;--surface:#11161e;--card:#141a23;--line:#1e2630;--line2:#29333f;
+ --txt:#e8edf3;--muted:#93a1b1;--faint:#5c6a78;
+ --green:#34d27b;--green2:#1f7d4d;--red:#ff6b76;--amber:#f5a524;--blue:#3b9eff;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:'Hanken Grotesk',system-ui,sans-serif;background:radial-gradient(ellipse at 25% 0%,rgba(59,158,255,.08) 0%,var(--bg) 55%),radial-gradient(ellipse at 75% 90%,rgba(52,210,123,.06) 0%,transparent 55%);color:var(--txt);
+ padding:max(14px,env(safe-area-inset-top)) 14px max(28px,env(safe-area-inset-bottom));line-height:1.4;
+ -webkit-font-smoothing:antialiased;max-width:480px;margin:0 auto;min-height:100vh}
+.mono{font-family:'JetBrains Mono',monospace}
+
+/* lock */
+#lock{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;z-index:60}
+#lock h1{font-family:'JetBrains Mono',monospace;font-size:22px;letter-spacing:.16em;font-weight:800;margin-bottom:6px}
+#lock p{color:var(--faint);font-size:13px;margin-bottom:26px;text-align:center}
+#lock input{width:100%;max-width:340px;background:var(--card);border:1.5px solid var(--line);color:var(--txt);
+ font-family:'JetBrains Mono',monospace;font-size:15px;padding:15px;border-radius:13px;outline:0;text-align:center}
+#lock input:focus{border-color:var(--green)}
+#lock button{width:100%;max-width:340px;margin-top:12px;border:0;background:var(--green);color:#04130a;
+ font:inherit;font-weight:800;font-size:16px;padding:15px;border-radius:13px;cursor:pointer}
+#lockErr{color:var(--red);font-size:12.5px;margin-top:12px;min-height:16px;text-align:center}
+
+.app{display:none}
+.app.on{display:block}
+
+header{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:4px}
+header h1{font-family:'JetBrains Mono',monospace;font-size:18px;letter-spacing:.14em;font-weight:800}
+#refresh{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--faint);cursor:pointer;border:1px solid var(--line);
+ padding:5px 9px;border-radius:8px;background:var(--surface)}
+.sub{color:var(--faint);font-size:11.5px;margin-bottom:16px;letter-spacing:.02em}
+
+.card{background:rgba(20,26,35,.55);backdrop-filter:blur(18px) saturate(140%);-webkit-backdrop-filter:blur(18px) saturate(140%);border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:16px;margin-bottom:13px}
+.tt{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.08em;color:var(--faint);font-weight:700;text-transform:uppercase;margin-bottom:13px}
+
+/* bonus hero */
+.bonus{background:linear-gradient(160deg,rgba(52,210,123,.12),rgba(52,210,123,.03));backdrop-filter:blur(18px) saturate(140%);-webkit-backdrop-filter:blur(18px) saturate(140%);border-color:rgba(52,210,123,.28)}
+.bonus .lab{font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.09em;color:var(--green);font-weight:700;text-transform:uppercase}
+.bonus .big{font-family:'JetBrains Mono',monospace;font-size:38px;font-weight:800;letter-spacing:-.01em;margin:7px 0 2px;line-height:1}
+.bonus .big .rp{font-size:18px;color:var(--muted);margin-right:3px;font-weight:700}
+.bonus .meta{font-size:12.5px;color:var(--muted);margin-top:8px}
+.bonus .meta b{color:var(--txt);font-weight:700}
+.bonus .last{font-size:11.5px;color:var(--faint);margin-top:9px;padding-top:10px;border-top:1px solid rgba(52,210,123,.18)}
+
+/* 3-cell grid */
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+.g3 .cell{background:rgba(17,22,30,.6);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:12px 10px;text-align:center}
+.g3 .cell .k{font-size:10px;text-transform:uppercase;letter-spacing:.04em;color:var(--faint);font-weight:600}
+.g3 .cell .v{font-family:'JetBrains Mono',monospace;font-weight:800;font-size:17px;margin-top:5px}
+.g3 .cell .u{font-size:9.5px;color:var(--faint);font-weight:600}
+
+/* money rows */
+.row{display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-bottom:1px solid var(--line)}
+.row:last-child{border-bottom:0;padding-bottom:0}
+.row:first-child{padding-top:0}
+.row .name{font-size:13.5px;color:var(--muted)}
+.row .name small{display:block;font-size:10.5px;color:var(--faint)}
+.row .amt{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:15px}
+.amt .rp{font-size:11px;color:var(--faint);margin-right:2px}
+.green{color:var(--green)} .red{color:var(--red)} .amber{color:var(--amber)}
+.note{font-size:11px;color:var(--faint);margin-top:12px;line-height:1.5;font-style:italic}
+
+/* table */
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th{font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.03em;text-transform:uppercase;color:var(--faint);font-weight:700;text-align:right;padding:0 0 9px;border-bottom:1px solid var(--line2)}
+th:first-child{text-align:left}
+td{padding:9px 0;border-bottom:1px solid var(--line);text-align:right;font-family:'JetBrains Mono',monospace;font-weight:700}
+td:first-child{text-align:left;font-family:'Hanken Grotesk',sans-serif;font-weight:600;color:var(--txt)}
+tr:last-child td{border-bottom:0}
+.empty{color:var(--faint);font-size:12.5px;text-align:center;padding:14px 0}
+
+.foot{color:var(--faint);font-size:10.5px;text-align:center;margin-top:18px;line-height:1.6;letter-spacing:.02em}
+</style>
+</head>
+<body>
+
+<div id="lock">
+  <h1>RINCIAN</h1>
+  <p>Masukkan kode lapangan untuk melihat<br>rincian pembukuan &amp; bonus</p>
+  <input id="tokenInput" type="password" inputmode="text" placeholder="kode lapangan" autocomplete="off" autocapitalize="off" spellcheck="false">
+  <button id="unlock">Buka</button>
+  <div id="lockErr"></div>
+</div>
+
+<div class="app" id="app">
+  <header>
+    <h1>RINCIAN</h1>
+    <span id="refresh" class="mono">↻ segarkan</span>
+  </header>
+  <div class="sub">pembukuan lapangan · Honrai Veggies</div>
+
+  <div class="card bonus">
+    <div class="lab">Bonus kamu · periode berjalan</div>
+    <div class="big mono" id="b-bonus"><span class="rp">Rp</span>—</div>
+    <div class="meta">dari hasil bersih berjalan <b id="b-net">Rp—</b></div>
+    <div class="last" id="b-last">—</div>
+  </div>
+
+  <div class="card">
+    <div class="tt">Barang · sejak awal</div>
+    <div class="g3">
+      <div class="cell"><div class="k">Dibeli</div><div class="v green" id="k-beli">—</div><div class="u">kg</div></div>
+      <div class="cell"><div class="k">Dijual</div><div class="v" id="k-jual">—</div><div class="u">kg</div></div>
+      <div class="cell"><div class="k">Susut</div><div class="v amber" id="k-susut">—</div><div class="u">kg</div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="tt">Uang keluar · sejak awal</div>
+    <div class="row"><div class="name">Belanja barang<small>beli ke petani / bandar</small></div><div class="amt red" id="o-belanja"><span class="rp">Rp</span>—</div></div>
+    <div class="row"><div class="name">Operasional<small>bensin, kuli, dll</small></div><div class="amt red" id="o-oprs"><span class="rp">Rp</span>—</div></div>
+    <div class="row"><div class="name">Nilai susut<small>barang hilang/busuk</small></div><div class="amt amber" id="o-susut"><span class="rp">Rp</span>—</div></div>
+  </div>
+
+  <div class="card">
+    <div class="tt">Uang masuk · sejak awal</div>
+    <div class="row"><div class="name">Penjualan<small>ecer + centeng</small></div><div class="amt green" id="i-jual"><span class="rp">Rp</span>—</div></div>
+    <div class="row"><div class="name">Laba dari selisih harga<small>beli murah, jual lebih mahal</small></div><div class="amt green" id="i-laba"><span class="rp">Rp</span>—</div></div>
+    <div class="note" id="i-note">Uang masuk lahir dari memutar modal: barang dibeli, dijual lebih tinggi, lalu modal diputar lagi.</div>
+  </div>
+
+  <div class="card">
+    <div class="tt">Per komoditas · sejak awal</div>
+    <table>
+      <thead><tr><th>Barang</th><th>Beli</th><th>Jual</th><th>Susut</th><th>Margin</th></tr></thead>
+      <tbody id="pc-body"><tr><td colspan="5" class="empty">memuat…</td></tr></tbody>
+    </table>
+  </div>
+
+  <div class="foot">
+    Angka pembukuan = total sejak awal usaha.<br>
+    Bonus = 15% dari hasil bersih periode sejak bagi hasil terakhir.<br>
+    Tampilan ini hanya-baca — uang &amp; pencatatan dipegang langsung oleh pemodal.
+  </div>
+</div>
+
+<script>
+var API="https://fafkgfddyrimfdlpqwqs.supabase.co/functions/v1/veg-read";
+var KEY="honrai_ftoken";
+function $(id){return document.getElementById(id)}
+function fmt(n){return Number(Math.round(n||0)).toLocaleString('id-ID')}
+function kg(n){var x=Number(n||0);return (Math.round(x*10)/10).toLocaleString('id-ID')}
+function dlabel(s){if(!s)return null;var p=String(s).split('-');if(p.length<3)return s;return p[2]+'/'+p[1]+'/'+p[0]}
+
+function token(){return localStorage.getItem(KEY)||''}
+function api(){
+ return fetch(API,{method:'POST',headers:{'Content-Type':'application/json','x-app-token':token()},body:JSON.stringify({scope:'summary'})})
+  .then(function(r){return r.json().then(function(j){return {ok:r.ok,status:r.status,j:j}})});
+}
+
+function render(d){
+ $('b-bonus').innerHTML='<span class="rp">Rp</span>'+fmt(d.bonus_each);
+ $('b-net').textContent='Rp'+fmt(d.net);
+ var last=dlabel(d.last_payout);
+ var totalTxt=(d.bonus_total_each>0)?(' · total bonus kamu Rp'+fmt(d.bonus_total_each)):'';
+ $('b-last').textContent=(last?('Terakhir dibagi '+last):'Belum pernah dibagi')+totalTxt;
+
+ $('k-beli').textContent=kg(d.kg_beli);
+ $('k-jual').textContent=kg(d.kg_jual);
+ $('k-susut').textContent=kg(d.kg_susut);
+
+ $('o-belanja').innerHTML='<span class="rp">Rp</span>'+fmt(d.uang_belanja);
+ $('o-oprs').innerHTML='<span class="rp">Rp</span>'+fmt(d.uang_operasional);
+ $('o-susut').innerHTML='<span class="rp">Rp</span>'+fmt(d.nilai_susut);
+
+ $('i-jual').innerHTML='<span class="rp">Rp</span>'+fmt(d.uang_penjualan);
+ $('i-laba').innerHTML='<span class="rp">Rp</span>'+fmt(d.laba_kotor);
+ if(d.n_jual>0){$('i-note').textContent='Uang masuk lahir dari memutar modal: '+d.n_jual+'× jual sejauh ini — barang dibeli, dijual lebih tinggi, modal diputar lagi.';}
+
+ var pc=d.per_commodity||[];var b=$('pc-body');
+ if(!pc.length){b.innerHTML='<tr><td colspan="5" class="empty">belum ada transaksi</td></tr>';return}
+ b.innerHTML=pc.map(function(c){
+   var m=c.margin_kg||0;var mc=m>0?'green':(m<0?'red':'');
+   return '<tr><td>'+c.name+'</td><td>'+kg(c.kg_beli)+'</td><td>'+kg(c.kg_jual)+'</td><td class="amber">'+kg(c.kg_susut)+'</td><td class="'+mc+'">'+(m>0?'+':'')+fmt(m)+'</td></tr>';
+ }).join('');
+}
+
+function load(){
+ $('refresh').textContent='↻ …';
+ api().then(function(res){
+   $('refresh').textContent='↻ segarkan';
+   if(res.status===401){lockOut('Kode lapangan salah');return}
+   if(res.ok&&res.j){render(res.j)}
+ }).catch(function(){$('refresh').textContent='↻ segarkan'});
+}
+
+function showApp(){$('lock').style.display='none';$('app').classList.add('on');load()}
+function lockOut(msg){localStorage.removeItem(KEY);$('app').classList.remove('on');$('lock').style.display='flex';$('lockErr').textContent=msg||''}
+
+$('unlock').addEventListener('click',function(){
+ var v=$('tokenInput').value.trim();if(!v){$('lockErr').textContent='Isi kodenya dulu';return}
+ localStorage.setItem(KEY,v);$('lockErr').textContent='';$('tokenInput').value='';showApp();
+});
+$('tokenInput').addEventListener('keydown',function(e){if(e.key==='Enter')$('unlock').click()});
+$('refresh').addEventListener('click',load);
+document.addEventListener('visibilitychange',function(){if(!document.hidden&&token())load()});
+setInterval(function(){if(!document.hidden&&token())load()},30000);
+
+if(token()){showApp()}
+</script>
+</body>
+</html>
