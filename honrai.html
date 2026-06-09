@@ -370,7 +370,7 @@ function setCat(c){cat=c;var b=$('seg').children;for(var i=0;i<b.length;i++)b[i]
  toR.classList.add('hide');debtR.classList.add('hide');fromR.classList.remove('hide');segW.style.visibility='visible';
  if(c==='transfer'){toR.classList.remove('hide');$('fromLbl').textContent='Dari akun';$('toLbl').textContent='Ke akun';$('pgo').textContent='Catat'}
  else if(c==='income'){fromR.classList.add('hide');toR.classList.remove('hide');$('toLbl').textContent='Ke akun';$('pgo').textContent='Catat'}
- else if(c==='debt'){$('fromLbl').textContent='Bayar dari';debtR.classList.remove('hide');segW.style.visibility='hidden';$('pgo').textContent='Bayar Utang';fillDebts()}
+ else if(c==='debt'){$('fromLbl').textContent='Bayar dari';debtR.classList.remove('hide');segW.style.visibility='hidden';$('pgo').textContent='Bayar Utang';fillDebts();if(!DEBTS.length)loadDash()}
  else{$('fromLbl').textContent='Dari akun';$('pgo').textContent='Catat'}}
 function submitTx(){
  if(raw<=0){toast('Nominal harus lebih dari 0','err');return}
