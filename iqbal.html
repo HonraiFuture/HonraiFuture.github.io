@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Iqbal">
+<meta name="theme-color" content="#0a0d12">
+<title>Iqbal · Slot B</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0a0d12;--surface:#11161e;--card:#141a23;--line:#1e2630;--line2:#29333f;--txt:#e8edf3;--muted:#93a1b1;--faint:#5c6a78;--green:#34d27b;--red:#ff6b76;--amber:#f5a524;--blue:#3b9eff;}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:'Hanken Grotesk',system-ui,sans-serif;background:radial-gradient(ellipse at 25% 0%,rgba(52,210,123,.08) 0%,var(--bg) 55%),radial-gradient(ellipse at 75% 90%,rgba(59,158,255,.05) 0%,transparent 55%);color:var(--txt);padding:max(14px,env(safe-area-inset-top)) 14px max(28px,env(safe-area-inset-bottom));-webkit-font-smoothing:antialiased;max-width:480px;margin:0 auto;min-height:100vh;line-height:1.4}
+.mono{font-family:'JetBrains Mono',monospace}.hide{display:none!important}
+#lock{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:26px;z-index:80}
+#lock h1{font-family:'JetBrains Mono',monospace;font-size:28px;letter-spacing:.12em;font-weight:800}
+#lock .slot{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--green);letter-spacing:.2em;margin:3px 0 22px}
+#lock input{width:100%;max-width:340px;background:rgba(20,26,35,.8);border:1.5px solid var(--line);color:var(--txt);font-family:'JetBrains Mono',monospace;font-size:15px;padding:15px;border-radius:13px;outline:0;text-align:center}
+#lock input:focus{border-color:var(--green)}
+#lock button{width:100%;max-width:340px;margin-top:12px;border:0;background:var(--green);color:#04130a;font:inherit;font-weight:800;font-size:16px;padding:15px;border-radius:13px;cursor:pointer}
+.app{display:none}.app.on{display:block}
+header{display:flex;align-items:center;gap:10px;padding-bottom:16px}
+header h1{font-family:'JetBrains Mono',monospace;font-size:22px;letter-spacing:.12em;font-weight:800}
+.badge{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:800;background:rgba(52,210,123,.14);color:var(--green);border:1px solid rgba(52,210,123,.3);padding:4px 10px;border-radius:20px;letter-spacing:.06em}
+.refresh{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--faint);cursor:pointer;border:1px solid var(--line);padding:5px 9px;border-radius:8px;background:rgba(20,26,35,.5)}
+.card{background:rgba(20,26,35,.55);backdrop-filter:blur(18px) saturate(140%);-webkit-backdrop-filter:blur(18px) saturate(140%);border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:16px;margin-bottom:13px}
+.tt{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.08em;color:var(--faint);font-weight:700;text-transform:uppercase;margin-bottom:12px}
+.bonus-card{background:linear-gradient(160deg,rgba(52,210,123,.12),rgba(52,210,123,.03));backdrop-filter:blur(18px) saturate(140%);-webkit-backdrop-filter:blur(18px) saturate(140%);border:1px solid rgba(52,210,123,.28)}
+.bonus-lab{font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.09em;color:var(--green);font-weight:700;text-transform:uppercase;margin-bottom:7px}
+.bonus-big{font-family:'JetBrains Mono',monospace;font-size:36px;font-weight:800;letter-spacing:-.01em;line-height:1}
+.bonus-big .rp{font-size:17px;color:var(--muted);margin-right:3px}
+.bonus-meta{font-size:12.5px;color:var(--muted);margin-top:8px}
+.bonus-meta b{color:var(--txt)}
+.bonus-last{font-size:11.5px;color:var(--faint);margin-top:9px;padding-top:9px;border-top:1px solid rgba(52,210,123,.18)}
+.period-header{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:13px}
+.period-label{font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:800;color:var(--txt)}
+.period-hari{font-size:12px;color:var(--faint);font-family:'JetBrains Mono',monospace}
+.saldo-row{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:8px}
+.saldo-big{font-family:'JetBrains Mono',monospace;font-weight:800;font-size:30px;line-height:1}
+.saldo-big .rp{font-size:15px;color:var(--muted);margin-right:2px}
+.saldo-modal{font-size:12px;color:var(--faint);font-family:'JetBrains Mono',monospace}
+.profit-line{display:flex;align-items:center;gap:7px;margin-bottom:14px;font-size:13px;font-family:'JetBrains Mono',monospace;font-weight:700}
+.green{color:var(--green)}.red{color:var(--red)}.amber{color:var(--amber)}
+.btnlog{width:100%;border:0;background:rgba(52,210,123,.14);color:var(--green);border:1px solid rgba(52,210,123,.3);font:inherit;font-weight:800;font-size:15px;padding:15px;border-radius:13px;cursor:pointer}
+.logs-tt{font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--faint);font-weight:700;margin:14px 0 8px}
+.log-row{display:flex;align-items:center;padding:9px 0;border-top:1px solid var(--line2)}
+.log-row:first-of-type{border-top:0}
+.log-date{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--faint);width:54px;flex:none}
+.log-vals{flex:1;display:flex;gap:10px;font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:700}
+.log-note{font-size:11px;color:var(--faint);margin-top:3px}
+.empty{color:var(--faint);font-size:13px;padding:18px 0;text-align:center}
+.idle-card{text-align:center;padding:28px 16px}
+.idle-card .icon{font-size:32px;margin-bottom:10px}
+.idle-card p{font-size:14px;color:var(--muted);line-height:1.6}
+.ov{position:fixed;inset:0;background:rgba(5,7,10,.72);backdrop-filter:blur(4px);display:flex;align-items:flex-end;justify-content:center;z-index:50;opacity:0;pointer-events:none;transition:.2s}
+.ov.show{opacity:1;pointer-events:auto}
+.sheet{width:100%;max-width:480px;background:rgba(11,15,22,.88);backdrop-filter:blur(24px) saturate(160%);-webkit-backdrop-filter:blur(24px) saturate(160%);border:1px solid rgba(255,255,255,.1);border-bottom:0;border-radius:22px 22px 0 0;padding:22px 16px max(22px,env(safe-area-inset-bottom));transform:translateY(20px);transition:.22s}
+.ov.show .sheet{transform:translateY(0)}
+.sheet h3{font-family:'JetBrains Mono',monospace;font-size:13px;letter-spacing:.05em;margin-bottom:16px;font-weight:700}
+.fld{margin-bottom:13px}.fld label{display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:.09em;color:var(--faint);font-weight:600;margin-bottom:7px}
+.fld input{width:100%;font:inherit;font-size:16px;font-weight:500;color:var(--txt);background:rgba(10,13,18,.8);border:1.5px solid var(--line);border-radius:12px;padding:13px 14px;outline:0}
+.fld input:focus{border-color:var(--green)}
+.snum{display:flex;align-items:center;background:rgba(10,13,18,.8);border:1.5px solid var(--line);border-radius:13px;padding:2px 14px;margin-top:7px}
+.snum span{font-family:'JetBrains Mono',monospace;font-size:17px;color:var(--faint);font-weight:700}
+.snum input{flex:1;min-width:0;border:0;background:transparent;color:var(--txt);font-family:'JetBrains Mono',monospace;font-weight:800;font-size:25px;padding:12px 0;text-align:right;outline:0}
+.save{width:100%;border:0;font:inherit;font-weight:800;font-size:16px;padding:16px;border-radius:14px;cursor:pointer;color:#04130a;background:var(--green)}
+.save:disabled{opacity:.5}
+.toast{position:fixed;left:14px;right:14px;bottom:max(18px,env(safe-area-inset-bottom));max-width:452px;margin:0 auto;background:#1a212b;border:1px solid var(--line2);color:#fff;border-radius:13px;padding:14px 16px;font-size:14px;font-weight:500;display:flex;align-items:center;gap:10px;opacity:0;transform:translateY(16px);transition:.26s;pointer-events:none;z-index:70}
+.toast.show{opacity:1;transform:translateY(0)}.toast.ok{border-color:rgba(52,210,123,.5)}.toast.err{border-color:rgba(255,107,118,.5)}
+.toast .dot{width:8px;height:8px;border-radius:50%;background:var(--green);flex:none}.toast.err .dot{background:var(--red)}
+</style>
+</head>
+<body>
+<div id="lock"><h1>IQBAL</h1><div class="slot">SLOT B</div><input id="ki" type="password" placeholder="kode lapangan" autocomplete="off" autocapitalize="off"><button id="ub">Buka</button></div>
+<div class="app" id="app">
+  <header><h1>IQBAL</h1><span class="badge">SLOT B</span><span class="refresh" id="ref">↻</span></header>
+  <div class="card bonus-card">
+    <div class="bonus-lab">Bonus kamu · periode berjalan</div>
+    <div class="bonus-big mono" id="b-bonus"><span class="rp">Rp</span>—</div>
+    <div class="bonus-meta">dari akumulasi laba periode tutup</div>
+    <div class="bonus-last" id="b-last">—</div>
+  </div>
+  <div id="period-wrap"></div>
+</div>
+<div class="ov" id="ovLog"><div class="sheet">
+  <h3>LOG HARI INI · SLOT B</h3>
+  <div class="fld"><label>Tanggal</label><input id="lg-tgl" type="date"></div>
+  <div class="fld"><label>Uang masuk <span style="color:var(--faint);font-size:9px;text-transform:none">(dari jual, tagih piutang, dll)</span></label><div class="snum"><span>Rp</span><input id="lg-masuk" inputmode="numeric" placeholder="0"></div></div>
+  <div class="fld"><label>Uang keluar <span style="color:var(--faint);font-size:9px;text-transform:none">(beli barang, biaya, dll)</span></label><div class="snum"><span>Rp</span><input id="lg-keluar" inputmode="numeric" placeholder="0"></div></div>
+  <div class="fld"><label>Catatan (opsional)</label><input id="lg-note" type="text" placeholder="—"></div>
+  <button class="save" id="lg-save">Simpan Log</button>
+</div></div>
+<div class="toast" id="toast"><span class="dot"></span><span id="toastMsg"></span></div>
+<script>
+var VP='https://fafkgfddyrimfdlpqwqs.supabase.co/functions/v1/veg-period';
+var TK='honrai_ftoken';var SLOT='B';var activePeriod=null;
+var MON=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+var $=function(id){return document.getElementById(id)};
+function fmt(n){return Number(Math.round(n||0)).toLocaleString('id-ID')}
+function digits(s){return parseInt((s||'').replace(/[^0-9]/g,''),10)||0}
+function dlabel(s){if(!s)return '';var p=String(s).split('-');return parseInt(p[2],10)+' '+MON[parseInt(p[1],10)-1]}
+function token(){return localStorage.getItem(TK)||''}
+function toast(m,k){var t=$('toast');$('toastMsg').textContent=m;t.className='toast show '+(k||'');setTimeout(function(){t.className='toast '+(k||'')},2600)}
+function api(body){return fetch(VP,{method:'POST',headers:{'Content-Type':'application/json','x-app-token':token()},body:JSON.stringify(body)}).then(function(r){return r.json().then(function(j){return{s:r.status,j:j}})})}
+function setDate(){var d=new Date();var m=String(d.getMonth()+1).padStart(2,'0');$('lg-tgl').value=d.getFullYear()+'-'+m+'-'+String(d.getDate()).padStart(2,'0')}
+function renderPeriods(data){
+ var ps=(data.periods||[]).filter(function(p){return p.slot===SLOT});
+ var bonus=data.bonus_each||0;var last=dlabel(data.last_payout);
+ $('b-bonus').innerHTML='<span class="rp">Rp</span>'+fmt(bonus);
+ $('b-last').textContent=last?('Terakhir dibagi '+last):'Belum pernah dibagi';
+ if(!ps.length){
+   $('period-wrap').innerHTML='<div class="card idle-card"><div class="icon">⏳</div><p>Belum ada periode aktif untuk Slot B.<br>Tunggu pemodal membuka periode baru.</p></div>';
+   activePeriod=null;return;
+ }
+ var p=ps[0];activePeriod=p;
+ var sisa=p.kas_sisa||0;var profit=sisa-(p.modal||0);var pct=p.modal?Math.round(profit/p.modal*100):0;
+ var pc=profit>=0?'green':'red';var ps_=profit>=0?'+':'';
+ var logsHtml='';var logs=p.logs||[];
+ if(logs.length){
+   logsHtml='<div class="logs-tt">Log terbaru</div>'+logs.slice(0,5).map(function(l){
+     var net=l.kas_masuk-l.kas_keluar;var nc=net>=0?'green':'red';var np=net>=0?'+':'';
+     return '<div class="log-row"><div class="log-date">'+dlabel(l.tanggal)+'</div><div><div class="log-vals"><span class="green">+'+fmt(l.kas_masuk)+'</span><span class="red">-'+fmt(l.kas_keluar)+'</span><span class="'+nc+'" style="margin-left:4px">'+np+fmt(net)+'</span></div>'+(l.note?'<div class="log-note">'+l.note+'</div>':'')+'</div></div>';
+   }).join('');
+ }
+ $('period-wrap').innerHTML='<div class="card"><div class="period-header"><span class="period-label">'+p.label+'</span><span class="period-hari">hari ke-'+p.hari+'</span></div><div class="saldo-row"><div><div class="saldo-big mono"><span class="rp">Rp</span>'+fmt(sisa)+'</div><div class="saldo-modal">modal awal Rp'+fmt(p.modal)+'</div></div></div><div class="profit-line"><span class="'+pc+'">'+ps_+fmt(profit)+' ('+ps_+pct+'%)</span><span style="color:var(--faint);font-size:11px">dari modal</span></div><button class="btnlog" onclick="openLog()">+ Log Hari Ini</button>'+logsHtml+'</div>';
+}
+function load(){$('ref').textContent='↻ …';api({scope:'active'}).then(function(res){$('ref').textContent='↻';if(res.s===401){lockOut();return}if(res.s>=200&&res.s<300&&res.j){renderPeriods(res.j)}}).catch(function(){$('ref').textContent='↻'})}
+function openLog(){if(!activePeriod){toast('Tidak ada periode aktif','err');return}setDate();$('lg-masuk').value='';$('lg-keluar').value='';$('lg-note').value='';$('ovLog').classList.add('show')}
+function saveLog(){var m=digits($('lg-masuk').value),k=digits($('lg-keluar').value);
+ if(!m&&!k){toast('Isi minimal satu angka','err');return}
+ var b=$('lg-save');b.disabled=true;b.textContent='…';
+ api({action:'log',period_id:activePeriod.id,kas_masuk:m,kas_keluar:k,tanggal:$('lg-tgl').value,note:$('lg-note').value.trim()||null}).then(function(res){b.disabled=false;b.textContent='Simpan Log';if(res.s===401){lockOut();return}if(res.j&&res.j.ok){$('ovLog').classList.remove('show');toast('Log tersimpan · masuk '+fmt(m)+' · keluar '+fmt(k),'ok');load()}else toast((res.j&&res.j.error)||'Gagal','err')}).catch(function(){b.disabled=false;b.textContent='Simpan Log';toast('Jaringan bermasalah','err')})}
+function lockOut(){localStorage.removeItem(TK);$('app').classList.remove('on');$('lock').style.display='flex'}
+function unlock(){var v=$('ki').value.trim();if(!v)return;localStorage.setItem(TK,v);$('ki').value='';$('lock').style.display='none';$('app').classList.add('on');load()}
+$('ub').addEventListener('click',unlock);$('ki').addEventListener('keydown',function(e){if(e.key==='Enter')unlock()});
+$('ref').addEventListener('click',load);
+$('lg-masuk').addEventListener('input',function(e){var v=digits(e.target.value);e.target.value=v?fmt(v):''});
+$('lg-keluar').addEventListener('input',function(e){var v=digits(e.target.value);e.target.value=v?fmt(v):''});
+$('lg-save').addEventListener('click',saveLog);
+$('ovLog').addEventListener('click',function(e){if(e.target===$('ovLog'))$('ovLog').classList.remove('show')});
+document.addEventListener('visibilitychange',function(){if(!document.hidden&&token())load()});
+setInterval(function(){if(!document.hidden&&token())load()},30000);
+if(token()){$('lock').style.display='none';$('app').classList.add('on');load()}
+</script>
+</body>
+</html>
