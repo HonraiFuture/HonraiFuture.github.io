@@ -152,6 +152,21 @@ tr:last-child td{border-bottom:0}
 .empty{color:var(--faint);font-size:12.5px;text-align:center;padding:14px 0}
 .refresh{text-align:center;color:var(--faint);font-size:11.5px;padding:8px;cursor:pointer}
 
+
+/* search & tx edit */
+.srchbar{display:flex;gap:7px;margin-bottom:10px;align-items:center}
+.srchbar input{flex:1;font:inherit;font-size:15px;color:var(--txt);background:var(--surface);border:1.5px solid var(--line);border-radius:12px;padding:11px 13px;outline:0}
+.srchbar input:focus{border-color:var(--accent)}
+.srchbar .fbtn{border:0;background:var(--surface);border:1px solid var(--line);color:var(--muted);font:inherit;font-weight:600;font-size:13px;padding:11px 13px;border-radius:12px;cursor:pointer;white-space:nowrap;flex:none}
+.srchbar .fbtn.on{background:rgba(255,138,92,.14);border-color:var(--accent);color:var(--accent)}
+.txfilt{margin-bottom:10px;padding:12px;background:var(--surface);border:1px solid var(--line);border-radius:12px}
+.txfilt .two{display:flex;gap:8px}.txfilt .two>div{flex:1}
+.txfilt label{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--faint);font-weight:600;margin-bottom:5px}
+.txfilt input[type=date]{width:100%;font:inherit;font-size:14px;color:var(--txt);background:var(--card);border:1px solid var(--line);border-radius:9px;padding:9px 10px;outline:0;-webkit-appearance:none}
+.loadmore{text-align:center;color:var(--blue);font-size:13px;font-weight:600;padding:10px 0;cursor:pointer}
+.tx[data-txid]{cursor:pointer}.tx[data-txid]:active{opacity:.7}
+.delrow{width:100%;border:0;font:inherit;font-weight:700;font-size:14px;padding:14px;border-radius:13px;cursor:pointer;color:var(--red);background:rgba(255,107,118,.10);border:1px solid rgba(255,107,118,.28);margin-top:8px}
+
 /* sheets */
 .ov{position:fixed;inset:0;background:rgba(5,7,10,.72);backdrop-filter:blur(4px);display:flex;align-items:flex-end;justify-content:center;z-index:50;opacity:0;pointer-events:none;transition:.2s}
 .ov.show{opacity:1;pointer-events:auto}
@@ -245,7 +260,21 @@ tr:last-child td{border-bottom:0}
       </div>
       <div class="card"><div class="tt">Pertumbuhan<span class="s" id="d-growthsub"></span></div><div class="chartwrap" id="chart"><div class="empty">memuat…</div></div></div>
       <div class="card"><div class="tt">Saldo per Akun</div><div id="d-accounts"><div class="empty">memuat…</div></div></div>
-      <div class="card"><div class="tt">Transaksi Terbaru</div><div id="d-recent"><div class="empty">memuat…</div></div></div>
+      <div class="card">
+  <div class="tt">Transaksi<span class="s" id="d-txcount"></span></div>
+  <div class="srchbar">
+    <input id="txSearch" type="text" placeholder="Cari nama transaksi…" autocomplete="off" autocapitalize="off">
+    <button class="fbtn" id="txFilterBtn">Filter</button>
+  </div>
+  <div class="txfilt hide" id="txFilterPanel">
+    <div class="two">
+      <div><label>Dari tanggal</label><input id="txFrom" type="date"></div>
+      <div><label>Sampai tanggal</label><input id="txTo" type="date"></div>
+    </div>
+  </div>
+  <div id="d-recent"><div class="empty">memuat…</div></div>
+  <div class="loadmore hide" id="txLoadMore">Muat lebih banyak…</div>
+</div>
       <div class="refresh" id="d-refresh">↻ ketuk untuk segarkan</div>
     </div>
   </div>
@@ -310,6 +339,17 @@ tr:last-child td{border-bottom:0}
   <div style="font-size:10.5px;color:var(--faint);margin-bottom:7px;text-transform:uppercase;letter-spacing:.05em">Porsi kamu (35%) masuk ke</div>
   <div class="psel" id="po-dest"><button data-d="BANK" class="on">BRI</button><button data-d="CASH">Tunai</button></div>
   <button class="save" id="po-save">Bagikan Sekarang</button>
+</div></div>
+
+
+<div class="ov" id="ovEditTx"><div class="sheet">
+  <h3>EDIT TRANSAKSI</h3>
+  <div class="fld"><label>Keterangan</label><input id="et-name" type="text" class="stxt" style="margin-bottom:0" placeholder="Nama transaksi" autocapitalize="words"></div>
+  <div class="fld"><label>Nominal</label><div class="snum"><span>Rp</span><input id="et-amt" inputmode="numeric" placeholder="0"></div></div>
+  <div class="fld"><label>Tanggal</label><input id="et-date" type="date" class="stxt" style="margin-bottom:0"></div>
+  <div class="fld"><label>Catatan (opsional)</label><input id="et-note" type="text" class="stxt" style="margin-bottom:0" placeholder="—"></div>
+  <button class="save" id="et-save">Simpan Perubahan</button>
+  <button class="delrow" id="et-del">Hapus Transaksi</button>
 </div></div>
 
 <div class="toast" id="toast"><span class="dot"></span><span id="toastMsg"></span></div>
@@ -397,7 +437,7 @@ function submitTx(){
 
 /* ---------- PRIBADI: ringkas ---------- */
 function loadDash(){$('d-refresh').textContent='↻ …';
- api(DASH,{}).then(function(res){$('d-refresh').textContent='↻ ketuk untuk segarkan';if(!guard(res))return;if(res.s>=200&&res.s<300&&res.j){DEBTS=res.j.debts||[];if(cat==='debt')fillDebts();renderDash(res.j)}}).catch(function(){$('d-refresh').textContent='↻ ketuk untuk segarkan'});}
+ api(DASH,{}).then(function(res){$('d-refresh').textContent='↻ ketuk untuk segarkan';if(!guard(res))return;if(res.s>=200&&res.s<300&&res.j){DEBTS=res.j.debts||[];if(cat==='debt')fillDebts();renderDash(res.j);loadTx(true);}}).catch(function(){$('d-refresh').textContent='↻ ketuk untuk segarkan'});}
 function renderDash(d){
  $('d-total').innerHTML='<span class="rp">Rp</span>'+fmt(d.total_assets);
  $('d-net').textContent='Rp'+fmt(d.net_worth);$('d-debt').textContent='Rp'+fmt(d.total_debt);
@@ -406,10 +446,7 @@ function renderDash(d){
    segs[p[0]].forEach(function(a){var br=a.asset>0?'<div class="br">cair '+fmt(a.liquid)+' · aset '+fmt(a.asset)+'</div>':'';
      html+='<div class="acct"><div><div class="nm">'+(NAMES[a.base]||a.base)+'</div>'+br+'</div><div class="bal">Rp'+fmt(a.total)+'</div></div>';});});
  $('d-accounts').innerHTML=html||'<div class="empty">—</div>';
- var rh='';(d.recent||[]).forEach(function(t){var cls=t.category==='income'?'in':t.category==='outcome'?'out':'tr';var sign=t.category==='income'?'+':t.category==='outcome'?'−':'';
-   var meta=t.category==='transfer'?((NAMES[t.from_code]||t.from_code)+' → '+(NAMES[t.to_code]||t.to_code)):t.category==='income'?('ke '+(NAMES[t.to_code]||t.to_code)):('dari '+(NAMES[t.from_code]||t.from_code));
-   rh+='<div class="tx"><div><div class="nm">'+t.name+'</div><div class="mt">'+dlabel(t.date)+' · '+meta+'</div></div><div class="am '+cls+'">'+sign+'Rp'+fmt(t.amount)+'</div></div>';});
- $('d-recent').innerHTML=rh||'<div class="empty">Belum ada transaksi</div>';
+ // d-recent is now handled by loadTx()
  drawChart(d.growth||[]);
 }
 function drawChart(series){var el=$('chart');
@@ -528,6 +565,96 @@ $('po-save').addEventListener('click',savePayout);
 ['ovBuka','ovLogOwner','ovTutupPeriod','ovPayout'].forEach(function(id){$(id).addEventListener('click',function(e){if(e.target===$(id))closeOv(id)})});
 document.addEventListener('visibilitychange',function(){if(document.hidden||!token())return;if(tab==='lapangan')loadPeriods();else if(tab==='analitik')loadHistory();else if(tab==='pribadi'&&psub==='ringkas')loadDash()});
 boot();
+
+/* ────────────────────── TX SEARCH + EDIT ────────────────────── */
+var txOffset=0,txSearchQ='',txFromDt='',txToDt='',txHasMore=false,editTxId=null;
+
+function loadTx(reset){
+  if(reset){txOffset=0;}
+  if(reset)$('d-recent').innerHTML='<div class="empty">memuat…</div>';
+  api(DASH,{action:'search_tx',q:txSearchQ||null,from_dt:txFromDt||null,to_dt:txToDt||null,p_limit:20,p_offset:txOffset}).then(function(res){
+    if(!guard(res))return;
+    if(res.j&&res.j.ok){
+      var rows=res.j.rows||[];
+      renderTxRows(rows,reset);
+      txHasMore=rows.length===20;
+      $('txLoadMore').classList.toggle('hide',!txHasMore);
+      txOffset+=rows.length;
+      $('d-txcount').textContent=txOffset+(txHasMore?'+':'')+' transaksi';
+    }
+  }).catch(function(){if(reset)$('d-recent').innerHTML='<div class="empty">Gagal memuat</div>';});
+}
+
+function renderTxRows(rows,reset){
+  var NAMES2={BANK:'Bank',CASH:'Tunai',PRIVE:'Prive',VEGGIES:'Veggies',AGRIEQUIPMENT:'Agriequipment',VEGGIES_ASET:'Veggies·Aset',AGRIEQUIPMENT_ASET:'Agriequipment·Aset',EXTERNAL:'Luar'};
+  if(!rows.length&&reset){$('d-recent').innerHTML='<div class="empty">Tidak ada transaksi</div>';return;}
+  var html=rows.map(function(t){
+    var cls=t.category==='income'?'in':t.category==='outcome'?'out':'tr';
+    var sign=t.category==='income'?'+':t.category==='outcome'?'−':'';
+    var meta=t.category==='transfer'?((NAMES2[t.from_code]||t.from_code)+' → '+(NAMES2[t.to_code]||t.to_code)):t.category==='income'?('ke '+(NAMES2[t.to_code]||t.to_code)):('dari '+(NAMES2[t.from_code]||t.from_code));
+    var nn=encodeURIComponent(t.name||'');
+    var nt=encodeURIComponent(t.note||'');
+    return '<div class="tx" data-txid="'+t.id+'" data-txn="'+nn+'" data-txa="'+t.amount+'" data-txd="'+t.occurred_at+'" data-txnote="'+nt+'"><div><div class="nm">'+t.name+'</div><div class="mt">'+dlabel(t.occurred_at)+' · '+meta+'</div></div><div class="am '+cls+'">'+sign+'Rp'+fmt(t.amount)+'</div></div>';
+  }).join('');
+  if(reset){$('d-recent').innerHTML=html;}
+  else{$('d-recent').insertAdjacentHTML('beforeend',html);}
+}
+
+$('d-recent').addEventListener('click',function(e){
+  var el=e.target.closest('[data-txid]');if(!el)return;
+  editTxId=parseInt(el.getAttribute('data-txid'),10);
+  $('et-name').value=decodeURIComponent(el.getAttribute('data-txn')||'');
+  $('et-amt').value=el.getAttribute('data-txa')||'';
+  $('et-date').value=el.getAttribute('data-txd')||'';
+  $('et-note').value=decodeURIComponent(el.getAttribute('data-txnote')||'');
+  openOv('ovEditTx');
+});
+
+var txTimer;
+$('txSearch').addEventListener('input',function(){
+  txSearchQ=this.value.trim();
+  clearTimeout(txTimer);
+  txTimer=setTimeout(function(){loadTx(true);},380);
+});
+
+$('txFilterBtn').addEventListener('click',function(){
+  var p=$('txFilterPanel'),on=!p.classList.contains('hide');
+  p.classList.toggle('hide',on);
+  this.classList.toggle('on',!on);
+});
+
+$('txFrom').addEventListener('change',function(){txFromDt=this.value;loadTx(true);});
+$('txTo').addEventListener('change',function(){txToDt=this.value;loadTx(true);});
+$('txLoadMore').addEventListener('click',function(){loadTx(false);});
+
+$('et-save').addEventListener('click',function(){
+  var n=$('et-name').value.trim();
+  var a=parseInt(($('et-amt').value||'').replace(/[^0-9]/g,''),10);
+  if(!n){toast('Isi keterangan dulu','err');return;}
+  if(!a||a<=0){toast('Nominal harus lebih dari 0','err');return;}
+  var btn=this;btn.disabled=true;btn.textContent='Menyimpan…';
+  api(TX,{action:'update',id:editTxId,name:n,amount:a,occurred_at:$('et-date').value,note:$('et-note').value.trim()||null})
+  .then(function(res){
+    btn.disabled=false;btn.textContent='Simpan Perubahan';
+    if(!guard(res))return;
+    if(res.j&&res.j.ok){closeOv('ovEditTx');toast('Disimpan','ok');loadTx(true);loadDash();}
+    else toast((res.j&&res.j.error)||'Gagal simpan','err');
+  }).catch(function(){btn.disabled=false;btn.textContent='Simpan Perubahan';toast('Jaringan bermasalah','err');});
+});
+
+$('et-del').addEventListener('click',function(){
+  if(!confirm('Hapus transaksi ini? Tidak bisa dibatalkan.'))return;
+  api(TX,{action:'delete',id:editTxId})
+  .then(function(res){
+    if(!guard(res))return;
+    if(res.j&&res.j.ok){closeOv('ovEditTx');toast('Dihapus','ok');loadTx(true);loadDash();}
+    else toast((res.j&&res.j.error)||'Gagal hapus','err');
+  }).catch(function(){toast('Jaringan bermasalah','err');});
+});
+
+// close edit sheet on backdrop tap
+$('ovEditTx').addEventListener('click',function(e){if(e.target===this)closeOv('ovEditTx');});
+
 </script>
 </body>
 </html>
