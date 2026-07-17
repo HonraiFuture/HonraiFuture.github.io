@@ -83,6 +83,19 @@
   .brief-body { font-size: 13.5px; line-height: 1.65; white-space: pre-wrap; }
   .brief-model { font-size: 9.5px; color: var(--faint); margin-top: 8px; font-family: ui-monospace, monospace; }
   .empty-note { color: var(--muted); font-size: 13px; text-align: center; line-height: 1.6; }
+  .focus-banner { border: 1px solid var(--brass-dim); background: rgba(201,162,39,0.08); border-radius: 12px;
+    padding: 14px 16px; margin-bottom: 16px; }
+  .focus-label { font-size: 10px; letter-spacing: 1.5px; color: var(--brass); text-transform: uppercase; font-weight: 700; margin-bottom: 5px; }
+  .focus-text { font-size: 14px; line-height: 1.5; }
+  .ai-note { border-bottom: 1px solid var(--border); padding: 10px 0; font-size: 13px; line-height: 1.55; }
+  .ai-note:last-child { border-bottom: none; }
+  .ai-note-date { font-size: 10px; color: var(--faint); margin-bottom: 3px; }
+  .pending-card { border: 1px solid var(--rust); border-radius: 12px; padding: 14px 16px; margin-bottom: 12px; }
+  .pending-type { font-size: 10px; letter-spacing: 1px; color: var(--rust); text-transform: uppercase; font-weight: 700; margin-bottom: 6px; }
+  .pending-body { font-size: 13.5px; line-height: 1.55; margin-bottom: 12px; }
+  .pending-actions-row { display: flex; gap: 8px; }
+  .approve-btn { flex: 1; background: var(--moss); color: #0B0F14; border: none; border-radius: 8px; padding: 9px; font-weight: 700; font-size: 12.5px; }
+  .reject-btn { flex: 1; background: transparent; border: 1px solid var(--rust); color: var(--rust); border-radius: 8px; padding: 9px; font-weight: 700; font-size: 12.5px; }
   svg { display: block; }
 </style>
 </head>
@@ -199,6 +212,7 @@ var S = {
   captures: [], capturesLoaded: false,
   briefings: [], briefingsLoaded: false,
   synthBusy: false,
+  pendingActions: [], pendingLoaded: false, pendingBusy: null,
   busy: false,
 };
 
@@ -261,7 +275,10 @@ function buildTabBar() {
     wrap.appendChild(el("button", { class: "tabbtn" + (S.activeTab === t[0] ? " active" : ""), onclick: function () {
       S.activeTab = t[0];
       if (t[0] === "jurnal" && !S.capturesLoaded) loadCaptures();
-      if (t[0] === "briefing" && !S.briefingsLoaded) loadBriefings();
+      if (t[0] === "briefing") {
+        if (!S.briefingsLoaded) loadBriefings();
+        if (!S.pendingLoaded) loadPendingActions();
+      }
       render();
     } }, [t[1]]));
   });
@@ -277,6 +294,8 @@ async function loadRoadmap() {
       startDate: st.start_date || null,
       checklist: (st.checklist && st.checklist.length) ? st.checklist : defaultChecklist(),
       weeklyNotes: (st.weekly_notes && Object.keys(st.weekly_notes).length) ? st.weekly_notes : defaultWeeklyNotes(),
+      todayFocus: st.today_focus || null,
+      aiNotes: st.ai_notes || [],
     };
     S.activePhase = currentPhaseIndex(dayNumber(S.roadmap.startDate));
   } catch (e) {
@@ -294,7 +313,14 @@ async function saveRoadmap() {
 
 function buildRoadmapTab() {
   if (!S.roadmap) { return el("div", { class: "loading-dot" }, ["Memuat roadmap\u2026"]); }
-  var d = el("div", {}, [buildRoadmapHeader()]);
+  var d = el("div", {}, []);
+  if (S.roadmap.todayFocus) {
+    d.appendChild(el("div", { class: "focus-banner" }, [
+      el("div", { class: "focus-label" }, ["Fokus hari ini \u2014 dari sintesis"]),
+      el("div", { class: "focus-text" }, [S.roadmap.todayFocus])
+    ]));
+  }
+  d.appendChild(buildRoadmapHeader());
   if (!S.roadmap.startDate) d.appendChild(buildStartCard());
   else { d.appendChild(buildPhaseTabs()); d.appendChild(buildPhaseCard()); d.appendChild(buildWeeklyLog()); }
   return d;
@@ -522,22 +548,84 @@ async function loadBriefings() {
   S.briefingsLoaded = true; render();
 }
 
+async function loadPendingActions() {
+  try { S.pendingActions = (await apiCall("list_pending_actions", { status: "pending" })).actions || []; }
+  catch (e) { S.pendingActions = []; }
+  S.pendingLoaded = true; render();
+}
+
+function describePendingAction(pa) {
+  if (pa.action_type === "set_roadmap_start_date") {
+    return "Usul menetapkan Hari 1 roadmap: " + (pa.payload && pa.payload.start_date) +
+      (pa.payload && pa.payload.reason ? " \u2014 alasan: " + pa.payload.reason : "");
+  }
+  return pa.action_type + ": " + JSON.stringify(pa.payload);
+}
+
+function buildPendingActionsPanel() {
+  if (!S.pendingLoaded) return el("div", { class: "loading-dot" }, ["Memuat usulan\u2026"]);
+  if (!S.pendingActions.length) return null;
+  var wrap = el("div", {}, [el("div", { class: "section-label" }, ["Menunggu Persetujuan"])]);
+  S.pendingActions.forEach(function (pa) {
+    var busy = S.pendingBusy === pa.id;
+    var decide = async function (decision) {
+      if (S.pendingBusy) return;
+      S.pendingBusy = pa.id; render();
+      try { await apiCall("resolve_pending_action", { id: pa.id, decision: decision }); }
+      catch (e) {}
+      S.pendingBusy = null; S.pendingLoaded = false;
+      await loadPendingActions();
+      if (decision === "approve") { S.roadmap = null; loadRoadmap(); }
+    };
+    wrap.appendChild(el("div", { class: "pending-card" }, [
+      el("div", { class: "pending-type" }, [pa.action_type.replace(/_/g, " ")]),
+      el("div", { class: "pending-body" }, [describePendingAction(pa)]),
+      el("div", { class: "pending-actions-row" }, [
+        el("button", { class: "approve-btn", onclick: function () { decide("approve"); } }, [busy ? "\u2026" : "Setujui"]),
+        el("button", { class: "reject-btn", onclick: function () { decide("reject"); } }, [busy ? "\u2026" : "Tolak"])
+      ])
+    ]));
+  });
+  return wrap;
+}
+
+function buildAiNotesPanel() {
+  var notes = (S.roadmap && S.roadmap.aiNotes) || [];
+  if (!notes.length) return null;
+  var card = el("div", { class: "card" }, [el("div", { class: "section-label", style: "margin-bottom:4px;" }, ["Catatan AI"])]);
+  notes.slice().reverse().forEach(function (n) {
+    card.appendChild(el("div", { class: "ai-note" }, [
+      el("div", { class: "ai-note-date" }, [fmtDay(n.created_at) + " \u00b7 " + fmtTime(n.created_at)]),
+      el("div", {}, [n.note])
+    ]));
+  });
+  return card;
+}
+
 function buildBriefingTab() {
   var wrap = el("div", {}, []);
   var runBtn = el("button", { class: "primary-btn", onclick: async function () {
     if (S.synthBusy) return;
     S.synthBusy = true; render();
-    try { await apiCall("run_synthesis"); S.briefingsLoaded = false; await loadBriefings(); }
-    catch (e) { S.briefingsLoaded = false; await loadBriefings(); }
+    try { await apiCall("run_synthesis"); } catch (e) {}
+    S.briefingsLoaded = false; S.pendingLoaded = false;
+    await Promise.all([loadBriefings(), loadPendingActions()]);
+    S.roadmap = null; await loadRoadmap();
     S.synthBusy = false; render();
   } }, [S.synthBusy ? "Menyintesis\u2026 (bisa 30 detik)" : "Sintesis sekarang"]);
 
   wrap.appendChild(el("div", { class: "card" }, [
     el("div", { class: "section-label", style: "margin-bottom:6px;" }, ["Sintesis Malam"]),
     el("div", { style: "font-size:12.5px;color:#8B95A1;line-height:1.6;margin-bottom:14px;" },
-      ["Berjalan otomatis tiap 03.00 WIB \u2014 membaca semua catatan 24 jam terakhir (teks, suara, dan isi visual foto), lalu mencari pola. Tombol di bawah untuk memaksa jalan sekarang."]),
+      ["Berjalan otomatis tiap 03.00 WIB \u2014 membaca semua catatan 24 jam terakhir (teks, suara, dan isi visual foto), lalu mencari pola. Bisa langsung update checklist/fokus/catatan AI; perubahan struktural (mis. tanggal mulai roadmap) menunggu persetujuanmu di bawah. Tombol di bawah untuk memaksa jalan sekarang."]),
     runBtn
   ]));
+
+  var pendingPanel = buildPendingActionsPanel();
+  if (pendingPanel) wrap.appendChild(pendingPanel);
+
+  var aiNotesPanel = buildAiNotesPanel();
+  if (aiNotesPanel) wrap.appendChild(aiNotesPanel);
 
   if (!S.briefingsLoaded) { wrap.appendChild(el("div", { class: "loading-dot" }, ["Memuat briefing\u2026"])); return wrap; }
   if (!S.briefings.length) {
