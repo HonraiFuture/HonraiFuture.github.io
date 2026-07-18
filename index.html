@@ -114,7 +114,7 @@ var PHASES = [
     tasks: [
       "Pisahkan Rp16,3jt: dana hidup darurat (jangan disentuh) vs dana eksperimen (maks 15\u201320%)",
       "Tidak ada trading / eksperimen finansial berisiko selama 30 hari ini",
-      "Bangun workflow n8n + Claude pertama \u2014 satu use-case nyata dari hidup sendiri",
+      "Bangun workflow Supabase + Claude pertama \u2014 satu use-case nyata dari hidup sendiri",
       "Formalisasi kriteria filter entropi jadi satu dokumen/prompt tetap",
       "Sistem kecil jalan tiap hari \u2014 bukan rencana di kertas"
     ]},
@@ -303,10 +303,23 @@ async function loadRoadmap() {
   }
   render();
 }
-async function saveRoadmap() {
+async function saveRoadmap(mutate) {
   try {
+    // Fetch-merge: ambil state server terbaru dulu supaya tidak menimpa
+    // perubahan dari sintesis AI (race last-write-wins).
+    var res = await apiCall("get_roadmap");
+    var st = res.state || {};
+    var fresh = {
+      startDate: st.start_date || null,
+      checklist: (st.checklist && st.checklist.length) ? st.checklist : defaultChecklist(),
+      weeklyNotes: (st.weekly_notes && Object.keys(st.weekly_notes).length) ? st.weekly_notes : defaultWeeklyNotes(),
+      todayFocus: st.today_focus || null,
+      aiNotes: st.ai_notes || [],
+    };
+    if (typeof mutate === "function") mutate(fresh);
+    S.roadmap = fresh;
     await apiCall("save_roadmap", {
-      start_date: S.roadmap.startDate, checklist: S.roadmap.checklist, weekly_notes: S.roadmap.weeklyNotes,
+      start_date: fresh.startDate, checklist: fresh.checklist, weekly_notes: fresh.weeklyNotes,
     });
   } catch (e) {}
 }
@@ -360,7 +373,8 @@ function buildStartCard() {
   var start = function (val) {
     S.roadmap.startDate = val;
     S.activePhase = currentPhaseIndex(dayNumber(val));
-    saveRoadmap(); render();
+    render();
+    saveRoadmap(function (fresh) { fresh.startDate = val; }).then(render);
   };
   return el("div", { class: "card" }, [
     el("div", { style: "font-size:15px;font-weight:600;margin-bottom:8px;" }, ["Belum ada titik mulai"]),
@@ -391,7 +405,15 @@ function buildPhaseCard() {
   var tasksWrap = el("div", {}, []);
   phase.tasks.forEach(function (t, ti) {
     var done = checklist[ti];
-    tasksWrap.appendChild(el("button", { class: "task", onclick: function () { checklist[ti] = !checklist[ti]; saveRoadmap(); render(); } }, [
+    var pi = S.activePhase;
+    tasksWrap.appendChild(el("button", { class: "task", onclick: async function () {
+      var newVal = !checklist[ti];
+      checklist[ti] = newVal; render(); // optimistic
+      await saveRoadmap(function (fresh) {
+        if (fresh.checklist[pi]) fresh.checklist[pi][ti] = newVal;
+      });
+      render();
+    } }, [
       el("span", { class: "checkbox" + (done ? " done" : "") }, done ? [iconCheck("#0B0F14")] : []),
       el("span", { class: "task-text" + (done ? " done" : "") }, [t])
     ]));
@@ -421,9 +443,21 @@ function buildWeeklyLog() {
     var box = el("div", { class: "week" }, [head]);
     if (open) {
       var d1 = el("textarea", { class: "text-input", rows: "2" }, []); d1.value = note.done;
-      d1.addEventListener("blur", function (e) { note.done = e.target.value; saveRoadmap(); });
+      d1.addEventListener("blur", function (e) {
+        var v = e.target.value; note.done = v;
+        saveRoadmap(function (fresh) {
+          if (!fresh.weeklyNotes[wk]) fresh.weeklyNotes[wk] = { done: "", stuck: "" };
+          fresh.weeklyNotes[wk].done = v;
+        });
+      });
       var d2 = el("textarea", { class: "text-input", rows: "2" }, []); d2.value = note.stuck;
-      d2.addEventListener("blur", function (e) { note.stuck = e.target.value; saveRoadmap(); });
+      d2.addEventListener("blur", function (e) {
+        var v = e.target.value; note.stuck = v;
+        saveRoadmap(function (fresh) {
+          if (!fresh.weeklyNotes[wk]) fresh.weeklyNotes[wk] = { done: "", stuck: "" };
+          fresh.weeklyNotes[wk].stuck = v;
+        });
+      });
       box.appendChild(el("div", { class: "week-body" }, [
         el("div", {}, [el("label", { class: "field-label", style: "color:#5A8A6E;" }, ["Selesai"]), d1]),
         el("div", {}, [el("label", { class: "field-label", style: "color:#C97757;" }, ["Macet"]), d2])
