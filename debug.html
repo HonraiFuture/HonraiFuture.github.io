@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<!-- 1784503765 --><title>Debug APP_SECRET</title>
+<style>
+  body { background:#0f172a; color:#e2e8f0; font-family:ui-monospace,monospace; padding:24px; }
+  input { width:100%; padding:10px; background:#1e293b; border:1px solid #334155; color:#e2e8f0; border-radius:6px; font-family:inherit; margin-bottom:8px; box-sizing:border-box; }
+  button { background:#fbbf24; color:#0f172a; border:none; padding:10px 16px; border-radius:6px; font-weight:600; }
+  pre { background:#1e293b; border:1px solid #334155; padding:14px; border-radius:6px; white-space:pre-wrap; word-break:break-all; font-size:12px; margin-top:16px; }
+</style>
+</head>
+<body>
+  <h3>Debug APP_SECRET</h3>
+  <p style="font-size:13px;color:#94a3b8;">Masukkan APP_SECRET yang kamu pakai, tap Cek. Ini bandingkan apa yang server lihat vs apa yang kamu kirim.</p>
+  <input type="text" id="secret" placeholder="paste APP_SECRET di sini" />
+  <button onclick="check()">Cek</button>
+  <pre id="out">(hasil muncul di sini)</pre>
+
+<script>
+const URL = "https://ppomgoflwpsyatmaynne.supabase.co/functions/v1/debug-secret";
+async function check() {
+  const s = document.getElementById("secret").value;
+  document.getElementById("out").textContent = "Mengecek...";
+  try {
+    const res = await fetch(URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-app-secret": s },
+      body: "{}",
+    });
+    const data = await res.json();
+    document.getElementById("out").textContent = JSON.stringify(data, null, 2);
+  } catch (err) {
+    document.getElementById("out").textContent = "ERROR: " + (err.message || err);
+  }
+}
+</script>
+</body>
+</html>
