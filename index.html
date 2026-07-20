@@ -4,64 +4,184 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>AI-OS Console</title>
+<title>Honrai</title>
 <style>
+  :root {
+    --bg: #fafafa;
+    --card: #ffffff;
+    --border: #e5e5e5;
+    --text: #1a1a1a;
+    --muted: #8a8a8a;
+    --navy: #152238;
+    --lemon: #f0d030;
+    --mono: ui-monospace, "SF Mono", Menlo, monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
   * { box-sizing: border-box; }
   body {
     margin: 0;
-    background: linear-gradient(160deg, #fef3e2 0%, #ffe8d6 40%, #fdd5c4 100%);
-    background-attachment: fixed;
-    color: #4a3b30;
-    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
     padding: 24px 16px 80px;
+    -webkit-font-smoothing: antialiased;
   }
   .wrap { max-width: 640px; margin: 0 auto; }
-  h1 { font-size: 13px; letter-spacing: 2px; text-transform: uppercase; color: #e07a5f; margin: 0 0 20px; }
+
+  /* HEADER / BRANDING */
+  .brandbar { display: flex; align-items: center; gap: 12px; margin-bottom: 22px; }
+  .logo {
+    width: 34px; height: 34px; border-radius: 50%;
+    background: #000000;
+    border: 2px solid var(--navy);
+    flex-shrink: 0;
+    position: relative;
+  }
+  .brand-text { display: flex; flex-direction: column; line-height: 1.1; }
+  .brand-title { font-size: 22px; font-weight: 700; color: var(--navy); letter-spacing: 0.5px; }
+  .brand-sub { font-size: 11px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; margin-top: 2px; }
+  .live-dot {
+    width: 9px; height: 9px; border-radius: 50%;
+    background: var(--lemon);
+    margin-left: auto;
+    box-shadow: 0 0 0 0 rgba(240, 208, 48, 0.6);
+    animation: pulse 2s infinite;
+    align-self: center;
+  }
+  @keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(240, 208, 48, 0.55); }
+    70% { box-shadow: 0 0 0 8px rgba(240, 208, 48, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(240, 208, 48, 0); }
+  }
+
+  /* INPUTS */
   input, textarea {
     width: 100%;
-    background: #fffaf3;
-    border: 1px solid #f0c9a8;
-    color: #4a3b30;
+    background: var(--card);
+    border: 1px solid var(--border);
+    color: var(--text);
     padding: 10px 12px;
     border-radius: 8px;
     font-size: 14px;
-    font-family: inherit;
+    font-family: var(--sans);
+    transition: border-color 0.2s ease;
   }
-  input::placeholder, textarea::placeholder { color: #b79a86; }
+  input:focus, textarea:focus { outline: none; border-color: var(--navy); }
+  input::placeholder, textarea::placeholder { color: var(--muted); }
+
+  /* BUTTONS */
   button {
-    background: linear-gradient(135deg, #f2a06d 0%, #e07a5f 100%);
-    color: #fffaf3;
+    background: var(--navy);
+    color: #ffffff;
     border: none;
     font-weight: 600;
     padding: 10px 16px;
     border-radius: 8px;
     font-size: 13px;
     cursor: pointer;
-    font-family: inherit;
-    box-shadow: 0 2px 6px rgba(224, 122, 95, 0.25);
+    font-family: var(--sans);
+    transition: filter 0.2s ease, background 0.2s ease, opacity 0.2s ease;
   }
-  button:hover { filter: brightness(1.04); }
+  button:hover { filter: brightness(1.15); }
   button:disabled { opacity: 0.4; cursor: not-allowed; }
-  button.secondary { background: transparent; border: 1px solid #e6b48f; color: #b06a4f; box-shadow: none; }
+  button.secondary { background: transparent; border: 1px solid var(--border); color: var(--text); }
+  button.secondary:hover { filter: none; border-color: var(--muted); background: #f2f2f2; }
   button.tiny { padding: 4px 10px; font-size: 11px; }
+
   .row { display: flex; gap: 8px; margin-bottom: 8px; }
-  .status { font-size: 11px; padding: 4px 8px; border: 1px solid #e6b48f; border-radius: 4px; text-transform: uppercase; color: #b06a4f; }
-  #errorBox, #errorBox2 { background: #fdecea; border: 1px solid #e07a5f; color: #b3392a; padding: 10px 14px; border-radius: 8px; font-size: 12px; margin-bottom: 16px; display: none; white-space: pre-wrap; }
-  #debugBox { background: #fffaf3; border: 1px solid #f0c9a8; color: #97836f; padding: 10px 14px; border-radius: 8px; font-size: 11px; margin-bottom: 16px; display: none; white-space: pre-wrap; }
-  #noticeBox { background: #eaf7ed; border: 1px solid #7bc490; color: #2f7d47; padding: 10px 14px; border-radius: 8px; font-size: 12px; margin-bottom: 16px; display: none; white-space: pre-wrap; }
+
+  /* STATUS / MESSAGE BOXES */
+  .status { font-size: 11px; padding: 4px 8px; border: 1px solid var(--border); border-radius: 4px; text-transform: uppercase; color: var(--muted); font-family: var(--mono); }
+  #errorBox, #errorBox2 { background: #fff; border: 1px solid #d13b2a; color: #b3392a; padding: 10px 14px; border-radius: 8px; font-size: 12px; margin-bottom: 16px; display: none; white-space: pre-wrap; font-family: var(--mono); }
+  #debugBox { background: var(--card); border: 1px solid var(--border); color: var(--muted); padding: 10px 14px; border-radius: 8px; font-size: 11px; margin-bottom: 16px; display: none; white-space: pre-wrap; font-family: var(--mono); }
+  #noticeBox { background: var(--card); border: 1px solid var(--navy); border-left: 3px solid var(--navy); color: var(--text); padding: 10px 14px; border-radius: 8px; font-size: 12px; margin-bottom: 16px; display: none; white-space: pre-wrap; }
+
   section { margin-bottom: 28px; }
-  section h2 { font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: #a9846b; margin: 0 0 10px; }
-  .card { background: #fffaf3; border: 1px solid #f0c9a8; border-radius: 10px; padding: 14px; margin-bottom: 10px; box-shadow: 0 1px 4px rgba(224, 122, 95, 0.08); }
-  .muted { color: #a9846b; font-size: 12px; }
-  a { color: #e07a5f; }
+  section h2 { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin: 0 0 12px; font-weight: 600; }
+
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 14px; margin-bottom: 10px; }
+  .card.flat { border: 1px solid var(--border); background: #fdfdfd; }
+  .card.pending { border-left: 3px solid var(--navy); }
+
+  .muted { color: var(--muted); font-size: 12px; }
+  .mono { font-family: var(--mono); }
+  a { color: var(--navy); }
+
   .secretbar { display:flex; justify-content:flex-end; margin-bottom: 12px; }
+
+  /* TABS */
+  .tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin-bottom: 22px; }
+  .tab {
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--muted);
+    font-family: var(--sans);
+    font-weight: 600;
+    font-size: 13px;
+    padding: 10px 14px;
+    cursor: pointer;
+    border-radius: 0;
+    transition: color 0.2s ease, border-color 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .tab:hover { filter: none; color: var(--text); background: transparent; }
+  .tab.active { color: var(--navy); border-bottom-color: var(--navy); }
+
+  /* BADGES / COUNTERS */
+  .badge {
+    background: var(--lemon);
+    color: var(--navy);
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 700;
+    padding: 1px 7px;
+    border-radius: 20px;
+    line-height: 1.6;
+    display: inline-block;
+  }
+
+  /* SUMMARY (Beranda) */
+  .summary-grid { display: flex; gap: 10px; margin-bottom: 24px; flex-wrap: wrap; }
+  .summary-card {
+    flex: 1; min-width: 120px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 14px;
+  }
+  .summary-num { font-family: var(--mono); font-size: 28px; font-weight: 700; color: var(--navy); line-height: 1; }
+  .summary-num.attn { color: var(--text); }
+  .summary-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-top: 8px; }
+
+  /* TAB PANELS + FADE */
+  .panel { display: none; animation: fadeIn 0.3s ease; }
+  .panel.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+  /* LOGIN */
+  #loginView { max-width: 420px; margin: 0 auto; }
+  #loginView .login-head { text-align: center; margin-bottom: 26px; }
+  #loginView .brandbar { justify-content: center; }
+  #loginView .live-dot { display: none; }
 </style>
 </head>
 <body>
 <div class="wrap">
-  <h1>&#128225; AI-OS Console (standalone)</h1>
 
+  <!-- LOGIN VIEW -->
   <div id="loginView">
+    <div class="login-head">
+      <div class="brandbar">
+        <div class="logo"></div>
+        <div class="brand-text">
+          <span class="brand-title">Honrai</span>
+          <span class="brand-sub">Operating System</span>
+        </div>
+      </div>
+    </div>
     <p class="muted">Masukkan APP_SECRET buat sesi ini. Bisa disimpan di browser ini biar nggak ketik ulang.</p>
     <div class="row">
       <input type="password" id="secretInput" placeholder="APP_SECRET" />
@@ -75,33 +195,81 @@
     <div id="debugBox"></div>
   </div>
 
+  <!-- MAIN VIEW -->
   <div id="mainView" style="display:none;">
+
+    <div class="brandbar">
+      <div class="logo"></div>
+      <div class="brand-text">
+        <span class="brand-title">Honrai</span>
+        <span class="brand-sub">Operating System</span>
+      </div>
+      <div class="live-dot" title="Sistem terkoneksi"></div>
+    </div>
+
     <div class="secretbar">
       <button class="secondary tiny" onclick="changeSecret()">Ganti Secret</button>
     </div>
+
+    <!-- TABS -->
+    <div class="tabs">
+      <button class="tab active" id="tabBtnBeranda" onclick="switchTab('beranda')">Beranda</button>
+      <button class="tab" id="tabBtnEntries" onclick="switchTab('entries')">Entries</button>
+      <button class="tab" id="tabBtnPending" onclick="switchTab('pending')">
+        Menunggu Keputusan <span id="pendingBadge" class="badge" style="display:none;">0</span>
+      </button>
+    </div>
+
     <div id="noticeBox"></div>
     <div id="errorBox2"></div>
 
-    <section>
-      <h2>Catatan baru</h2>
-      <div class="row">
-        <input id="composeInput" placeholder="Tulis sesuatu..." />
-        <button onclick="submitEntry()">Kirim</button>
-        <button class="secondary" onclick="submitInstruction()">Jadikan Instruksi AI</button>
+    <!-- PANEL: BERANDA -->
+    <div class="panel active" id="panelBeranda">
+      <div class="summary-grid">
+        <div class="summary-card">
+          <div class="summary-num" id="sumTotal">0</div>
+          <div class="summary-label">Total Entries</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-num attn" id="sumUnclassified">0</div>
+          <div class="summary-label">Belum Diklasifikasi</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-num attn" id="sumPending">0</div>
+          <div class="summary-label">PR Menunggu</div>
+        </div>
       </div>
-    </section>
 
-    <section>
-      <h2>Menunggu keputusan</h2>
-      <div id="pendingList"><p class="muted">Memuat...</p></div>
-    </section>
+      <section>
+        <h2>Catatan baru</h2>
+        <div class="row">
+          <input id="composeInput" placeholder="Tulis sesuatu..." />
+          <button onclick="submitEntry()">Kirim</button>
+          <button class="secondary" onclick="submitInstruction()">Jadikan Instruksi AI</button>
+        </div>
+      </section>
 
-    <section>
-      <h2>Log entries</h2>
-      <div id="entriesList"><p class="muted">Memuat...</p></div>
-    </section>
+      <button class="secondary" onclick="refresh()">&#8635; Refresh</button>
+    </div>
 
-    <button class="secondary" onclick="refresh()">&#8635; Refresh</button>
+    <!-- PANEL: ENTRIES -->
+    <div class="panel" id="panelEntries">
+      <section>
+        <h2>Log entries</h2>
+        <div id="entriesList"><p class="muted">Memuat...</p></div>
+      </section>
+      <button class="secondary" onclick="refresh()">&#8635; Refresh</button>
+    </div>
+
+    <!-- PANEL: PENDING -->
+    <div class="panel" id="panelPending">
+      <section>
+        <h2>Menunggu keputusan</h2>
+        <div id="pendingList"><p class="muted">Memuat...</p></div>
+      </section>
+      <button class="secondary" onclick="refresh()">&#8635; Refresh</button>
+    </div>
+
   </div>
 </div>
 
@@ -110,6 +278,21 @@ const BASE_URL = "https://ppomgoflwpsyatmaynne.supabase.co/functions/v1";
 const ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBwb21nb2Zsd3BzeWF0bWF5bm5lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ0NzIxMzksImV4cCI6MjEwMDA0ODEzOX0.H2fO03O2-_QrjFbVaTcEN2KWHJ79I_sMbmKjdZ1Itsg";
 const SECRET_KEY = "aios_app_secret";
 let SECRET = "";
+
+function switchTab(name) {
+  const map = {
+    beranda: ["tabBtnBeranda", "panelBeranda"],
+    entries: ["tabBtnEntries", "panelEntries"],
+    pending: ["tabBtnPending", "panelPending"],
+  };
+  Object.values(map).forEach(([btn, panel]) => {
+    document.getElementById(btn).classList.remove("active");
+    document.getElementById(panel).classList.remove("active");
+  });
+  const [btn, panel] = map[name];
+  document.getElementById(btn).classList.add("active");
+  document.getElementById(panel).classList.add("active");
+}
 
 function showError(msg) {
   const box = document.getElementById("errorBox");
@@ -189,10 +372,31 @@ async function refresh() {
   try {
     const e = await call("list-entries", { limit: 20 });
     const p = await call("list-pending-edits", {});
-    renderEntries(e.entries || []);
-    renderPending(p.pending_edits || []);
+    const entries = e.entries || [];
+    const pending = p.pending_edits || [];
+    renderEntries(entries);
+    renderPending(pending);
+    updateSummary(entries, pending);
   } catch (err) {
     showError(String(err.message || err));
+  }
+}
+
+function updateSummary(entries, pending) {
+  const total = entries.length;
+  const unclassified = entries.filter(e => e.status === "new").length;
+  const pendingCount = pending.length;
+
+  document.getElementById("sumTotal").textContent = total;
+  document.getElementById("sumUnclassified").textContent = unclassified;
+  document.getElementById("sumPending").textContent = pendingCount;
+
+  const badge = document.getElementById("pendingBadge");
+  if (pendingCount > 0) {
+    badge.style.display = "inline-block";
+    badge.textContent = pendingCount;
+  } else {
+    badge.style.display = "none";
   }
 }
 
@@ -220,7 +424,7 @@ async function submitInstruction() {
     if (!entryId) throw new Error("Gagal mendapatkan entry_id dari hasil ingest.");
     await call("interpret-instruction", { entry_id: entryId });
     document.getElementById("composeInput").value = "";
-    showNotice("Instruksi diterima. AI sedang menyusun PR (pending edit) untuk perubahan ini \\u2014 cek bagian \"Menunggu keputusan\" sebentar lagi.");
+    showNotice("Instruksi diterima. AI sedang menyusun PR (pending edit) untuk perubahan ini \\u2014 cek tab \"Menunggu Keputusan\" sebentar lagi.");
     refresh();
   } catch (err) {
     showError(String(err.message || err));
@@ -263,11 +467,11 @@ function renderEntries(entries) {
   const el = document.getElementById("entriesList");
   if (entries.length === 0) { el.innerHTML = '<p class="muted">Belum ada entry.</p>'; return; }
   el.innerHTML = entries.map(e => `
-    <div class="card">
+    <div class="card flat">
       <div style="display:flex; justify-content:space-between; gap:10px;">
         <div style="flex:1; min-width:0;">
           <div style="font-size:13px;">${escapeHtml(e.content || ("(" + e.type + ")"))}</div>
-          <div class="muted" style="margin-top:4px;">${new Date(e.created_at).toLocaleString("id-ID")}${e.classifications && e.classifications[0] ? " &middot; " + escapeHtml(e.classifications[0].label) : ""}</div>
+          <div class="muted mono" style="margin-top:4px;">${new Date(e.created_at).toLocaleString("id-ID")}${e.classifications && e.classifications[0] ? " &middot; " + escapeHtml(e.classifications[0].label) : ""}</div>
         </div>
         <div style="display:flex; align-items:start; gap:6px;">
           ${e.status === "new" ? `<button class="secondary" onclick="classifyEntry('${e.id}')">Klasifikasi</button>` : ""}
@@ -282,12 +486,12 @@ function renderPending(items) {
   const el = document.getElementById("pendingList");
   if (items.length === 0) { el.innerHTML = '<p class="muted">Tidak ada PR menunggu.</p>'; return; }
   el.innerHTML = items.map(pe => `
-    <div class="card">
+    <div class="card pending">
       <div style="display:flex; justify-content:space-between; gap:10px; margin-bottom:8px;">
         <div style="font-size:13px;">${escapeHtml(pe.diff_summary)}</div>
         <span class="status">${pe.status}</span>
       </div>
-      ${pe.pr_url ? `<div class="muted" style="margin-bottom:8px;"><a href="${pe.pr_url}" target="_blank">Lihat diff &#8599;</a></div>` : ""}
+      ${pe.pr_url ? `<div class="muted mono" style="margin-bottom:8px;"><a href="${pe.pr_url}" target="_blank">Lihat diff &#8599;</a></div>` : ""}
       ${pe.status === "needs_revision"
         ? `<button onclick="triggerRevision('${pe.id}')" style="width:100%;">Jalankan revisi AI</button>`
         : `<div class="row">
