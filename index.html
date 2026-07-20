@@ -9,44 +9,52 @@
   * { box-sizing: border-box; }
   body {
     margin: 0;
-    background: #0f172a;
-    color: #e2e8f0;
+    background: linear-gradient(160deg, #fef3e2 0%, #ffe8d6 40%, #fdd5c4 100%);
+    background-attachment: fixed;
+    color: #4a3b30;
     font-family: ui-monospace, "SF Mono", Menlo, monospace;
     padding: 24px 16px 80px;
   }
   .wrap { max-width: 640px; margin: 0 auto; }
-  h1 { font-size: 13px; letter-spacing: 2px; text-transform: uppercase; color: #fbbf24; margin: 0 0 20px; }
+  h1 { font-size: 13px; letter-spacing: 2px; text-transform: uppercase; color: #e07a5f; margin: 0 0 20px; }
   input, textarea {
     width: 100%;
-    background: #1e293b;
-    border: 1px solid #334155;
-    color: #e2e8f0;
+    background: #fffaf3;
+    border: 1px solid #f0c9a8;
+    color: #4a3b30;
     padding: 10px 12px;
-    border-radius: 6px;
+    border-radius: 8px;
     font-size: 14px;
     font-family: inherit;
   }
+  input::placeholder, textarea::placeholder { color: #b79a86; }
   button {
-    background: #fbbf24;
-    color: #0f172a;
+    background: linear-gradient(135deg, #f2a06d 0%, #e07a5f 100%);
+    color: #fffaf3;
     border: none;
     font-weight: 600;
     padding: 10px 16px;
-    border-radius: 6px;
+    border-radius: 8px;
     font-size: 13px;
     cursor: pointer;
     font-family: inherit;
+    box-shadow: 0 2px 6px rgba(224, 122, 95, 0.25);
   }
+  button:hover { filter: brightness(1.04); }
   button:disabled { opacity: 0.4; cursor: not-allowed; }
-  button.secondary { background: transparent; border: 1px solid #475569; color: #cbd5e1; }
+  button.secondary { background: transparent; border: 1px solid #e6b48f; color: #b06a4f; box-shadow: none; }
+  button.tiny { padding: 4px 10px; font-size: 11px; }
   .row { display: flex; gap: 8px; margin-bottom: 8px; }
-  .status { font-size: 11px; padding: 4px 8px; border: 1px solid #475569; border-radius: 4px; text-transform: uppercase; }
-  #errorBox { background: #450a0a; border: 1px solid #b91c1c; color: #fca5a5; padding: 10px 14px; border-radius: 6px; font-size: 12px; margin-bottom: 16px; display: none; white-space: pre-wrap; }
-  #debugBox { background: #1e293b; border: 1px solid #334155; color: #94a3b8; padding: 10px 14px; border-radius: 6px; font-size: 11px; margin-bottom: 16px; display: none; white-space: pre-wrap; }
+  .status { font-size: 11px; padding: 4px 8px; border: 1px solid #e6b48f; border-radius: 4px; text-transform: uppercase; color: #b06a4f; }
+  #errorBox, #errorBox2 { background: #fdecea; border: 1px solid #e07a5f; color: #b3392a; padding: 10px 14px; border-radius: 8px; font-size: 12px; margin-bottom: 16px; display: none; white-space: pre-wrap; }
+  #debugBox { background: #fffaf3; border: 1px solid #f0c9a8; color: #97836f; padding: 10px 14px; border-radius: 8px; font-size: 11px; margin-bottom: 16px; display: none; white-space: pre-wrap; }
+  #noticeBox { background: #eaf7ed; border: 1px solid #7bc490; color: #2f7d47; padding: 10px 14px; border-radius: 8px; font-size: 12px; margin-bottom: 16px; display: none; white-space: pre-wrap; }
   section { margin-bottom: 28px; }
-  section h2 { font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: #64748b; margin: 0 0 10px; }
-  .card { background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 14px; margin-bottom: 10px; }
-  .muted { color: #64748b; font-size: 12px; }
+  section h2 { font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: #a9846b; margin: 0 0 10px; }
+  .card { background: #fffaf3; border: 1px solid #f0c9a8; border-radius: 10px; padding: 14px; margin-bottom: 10px; box-shadow: 0 1px 4px rgba(224, 122, 95, 0.08); }
+  .muted { color: #a9846b; font-size: 12px; }
+  a { color: #e07a5f; }
+  .secretbar { display:flex; justify-content:flex-end; margin-bottom: 12px; }
 </style>
 </head>
 <body>
@@ -54,16 +62,24 @@
   <h1>&#128225; AI-OS Console (standalone)</h1>
 
   <div id="loginView">
-    <p class="muted">Masukkan APP_SECRET buat sesi ini. Nggak disimpan permanen.</p>
+    <p class="muted">Masukkan APP_SECRET buat sesi ini. Bisa disimpan di browser ini biar nggak ketik ulang.</p>
     <div class="row">
       <input type="password" id="secretInput" placeholder="APP_SECRET" />
       <button onclick="connect()">Hubungkan</button>
     </div>
+    <label class="muted" style="display:block; margin-bottom:12px;">
+      <input type="checkbox" id="rememberSecret" checked style="width:auto; margin-right:6px;" />
+      Ingat secret di browser ini
+    </label>
     <div id="errorBox"></div>
     <div id="debugBox"></div>
   </div>
 
   <div id="mainView" style="display:none;">
+    <div class="secretbar">
+      <button class="secondary tiny" onclick="changeSecret()">Ganti Secret</button>
+    </div>
+    <div id="noticeBox"></div>
     <div id="errorBox2"></div>
 
     <section>
@@ -71,6 +87,7 @@
       <div class="row">
         <input id="composeInput" placeholder="Tulis sesuatu..." />
         <button onclick="submitEntry()">Kirim</button>
+        <button class="secondary" onclick="submitInstruction()">Jadikan Instruksi AI</button>
       </div>
     </section>
 
@@ -91,6 +108,7 @@
 <script>
 const BASE_URL = "https://ppomgoflwpsyatmaynne.supabase.co/functions/v1";
 const ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBwb21nb2Zsd3BzeWF0bWF5bm5lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ0NzIxMzksImV4cCI6MjEwMDA0ODEzOX0.H2fO03O2-_QrjFbVaTcEN2KWHJ79I_sMbmKjdZ1Itsg";
+const SECRET_KEY = "aios_app_secret";
 let SECRET = "";
 
 function showError(msg) {
@@ -107,6 +125,18 @@ function debug(msg) {
   const box = document.getElementById("debugBox");
   box.style.display = "block";
   box.textContent = msg;
+}
+function showNotice(msg) {
+  const box = document.getElementById("noticeBox");
+  if (!box) return;
+  box.style.display = "block";
+  box.textContent = msg;
+}
+function clearNotice() {
+  const box = document.getElementById("noticeBox");
+  if (!box) return;
+  box.style.display = "none";
+  box.textContent = "";
 }
 
 async function call(fn, payload) {
@@ -130,6 +160,10 @@ async function connect() {
   debug("Menghubungi " + BASE_URL + "/list-entries ...");
   try {
     await call("list-entries", { limit: 1 });
+    const remember = document.getElementById("rememberSecret");
+    if (!remember || remember.checked) {
+      try { localStorage.setItem(SECRET_KEY, SECRET); } catch (e) {}
+    }
     document.getElementById("loginView").style.display = "none";
     document.getElementById("mainView").style.display = "block";
     refresh();
@@ -137,6 +171,17 @@ async function connect() {
     showError("Gagal connect: " + (err.message || err) + "\\n\\nKalau pesannya 'Failed to fetch', berarti koneksi ke Supabase-nya sendiri yang gagal (jaringan/CORS/domain). Kalau pesannya 'Unauthorized', berarti APP_SECRET salah.");
     debug("Error detail: " + (err.stack || err));
   }
+}
+
+function changeSecret() {
+  try { localStorage.removeItem(SECRET_KEY); } catch (e) {}
+  SECRET = "";
+  clearError();
+  clearNotice();
+  document.getElementById("mainView").style.display = "none";
+  document.getElementById("loginView").style.display = "block";
+  const inp = document.getElementById("secretInput");
+  if (inp) { inp.value = ""; inp.focus(); }
 }
 
 async function refresh() {
@@ -154,9 +199,28 @@ async function refresh() {
 async function submitEntry() {
   const text = document.getElementById("composeInput").value.trim();
   if (!text) return;
+  clearNotice();
   try {
     await call("ingest", { type: "text", content: text, metadata: { source: "standalone_console" } });
     document.getElementById("composeInput").value = "";
+    refresh();
+  } catch (err) {
+    showError(String(err.message || err));
+  }
+}
+
+async function submitInstruction() {
+  const text = document.getElementById("composeInput").value.trim();
+  if (!text) return;
+  clearNotice();
+  clearError();
+  try {
+    const ingested = await call("ingest", { type: "text", content: text, metadata: { source: "standalone_console", is_instruction: true } });
+    const entryId = ingested.entry_id || (ingested.entry && ingested.entry.id) || ingested.id;
+    if (!entryId) throw new Error("Gagal mendapatkan entry_id dari hasil ingest.");
+    await call("interpret-instruction", { entry_id: entryId });
+    document.getElementById("composeInput").value = "";
+    showNotice("Instruksi diterima. AI sedang menyusun PR (pending edit) untuk perubahan ini \\u2014 cek bagian \"Menunggu keputusan\" sebentar lagi.");
     refresh();
   } catch (err) {
     showError(String(err.message || err));
@@ -223,7 +287,7 @@ function renderPending(items) {
         <div style="font-size:13px;">${escapeHtml(pe.diff_summary)}</div>
         <span class="status">${pe.status}</span>
       </div>
-      ${pe.pr_url ? `<div class="muted" style="margin-bottom:8px;"><a href="${pe.pr_url}" target="_blank" style="color:#fbbf24;">Lihat diff &#8599;</a></div>` : ""}
+      ${pe.pr_url ? `<div class="muted" style="margin-bottom:8px;"><a href="${pe.pr_url}" target="_blank">Lihat diff &#8599;</a></div>` : ""}
       ${pe.status === "needs_revision"
         ? `<button onclick="triggerRevision('${pe.id}')" style="width:100%;">Jalankan revisi AI</button>`
         : `<div class="row">
@@ -241,6 +305,18 @@ function escapeHtml(s) {
   div.textContent = s;
   return div.innerHTML;
 }
+
+// Auto-connect kalau secret sudah tersimpan di browser
+(function initSecret() {
+  let saved = "";
+  try { saved = localStorage.getItem(SECRET_KEY) || ""; } catch (e) {}
+  if (saved) {
+    SECRET = saved;
+    const inp = document.getElementById("secretInput");
+    if (inp) inp.value = saved;
+    connect();
+  }
+})();
 </script>
 </body>
 </html>
