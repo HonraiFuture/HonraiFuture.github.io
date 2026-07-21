@@ -379,6 +379,9 @@
       <button class="tab" id="tabBtnAkuntansi" onclick="switchTab('akuntansi')">
         Akuntansi <span id="akuntansiBadge" class="badge" style="display:none;">0</span>
       </button>
+      <button class="tab" id="tabBtnLaporan" onclick="switchTab('laporan')">
+        Laporan <span id="laporanBadge" class="badge" style="display:none;">0</span>
+      </button>
     </div>
 
     <!-- PANEL: BERANDA -->
@@ -441,6 +444,32 @@
       <button class="secondary" onclick="refresh()">&#8635; Refresh</button>
     </div>
 
+    <!-- PANEL: LAPORAN -->
+    <div class="panel" id="panelLaporan">
+      <div id="laporanFailures"></div>
+      <section>
+        <h2>Posisi Kas</h2>
+        <div id="laporanCashPosition"></div>
+      </section>
+      <section>
+        <h2>Bulan Ini</h2>
+        <div id="laporanPeriodSummary"></div>
+      </section>
+      <section>
+        <h2>Saldo per Akun</h2>
+        <div id="laporanAccountBalances"></div>
+      </section>
+      <section>
+        <h2>Stok Barang</h2>
+        <div id="laporanInventory"></div>
+      </section>
+      <section>
+        <h2>Transaksi Terakhir</h2>
+        <div id="laporanTransactions"></div>
+      </section>
+      <button class="secondary" onclick="refreshLaporan()">&#8635; Refresh</button>
+    </div>
+
   </div>
 </div>
 
@@ -474,6 +503,7 @@ function switchTab(name) {
     entries: ["tabBtnEntries", "panelEntries"],
     pending: ["tabBtnPending", "panelPending"],
     akuntansi: ["tabBtnAkuntansi", "panelAkuntansi"],
+    laporan: ["tabBtnLaporan", "panelLaporan"],
   };
   Object.values(map).forEach(([btn, panel]) => {
     document.getElementById(btn).classList.remove("active");
@@ -482,6 +512,7 @@ function switchTab(name) {
   const [btn, panel] = map[name];
   document.getElementById(btn).classList.add("active");
   document.getElementById(panel).classList.add("active");
+  if (name === "laporan") refreshLaporan();
 }
 
 function showError(msg) {
@@ -892,6 +923,221 @@ function escapeHtml(str) {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
+}
+
+function formatRupiah(n) {
+  const num = Number(n) || 0;
+  const rounded = Math.round(num);
+  const str = Math.abs(rounded).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  return (rounded < 0 ? "-Rp " : "Rp ") + str;
+}
+
+async function refreshLaporan() {
+  clearError();
+  const cashEl = document.getElementById("laporanCashPosition");
+  const periodEl = document.getElementById("laporanPeriodSummary");
+  const balancesEl = document.getElementById("laporanAccountBalances");
+  const inventoryEl = document.getElementById("laporanInventory");
+  const txEl = document.getElementById("laporanTransactions");
+  if (cashEl) cashEl.innerHTML = skeleton(1);
+  if (periodEl) periodEl.innerHTML = skeleton(1);
+  if (balancesEl) balancesEl.innerHTML = skeleton(3);
+  if (inventoryEl) inventoryEl.innerHTML = skeleton(3);
+  if (txEl) txEl.innerHTML = skeleton(3);
+  try {
+    const r = await call("get-financial-report", {});
+    const failures = r.failures || [];
+    renderLaporanFailures(failures);
+    renderCashPosition(r.cash_position || {});
+    renderPeriodSummary(r.period_summary || {});
+    renderAccountBalances(r.account_balances || []);
+    renderInventory(r.inventory_stock || []);
+    renderTransactions(r.recent_transactions || []);
+    updateLaporanBadge(failures.length);
+  } catch (err) {
+    showError(String(err.message || err));
+  }
+}
+
+function updateLaporanBadge(count) {
+  const badge = document.getElementById("laporanBadge");
+  if (!badge) return;
+  if (count > 0) {
+    badge.style.display = "inline-block";
+    badge.textContent = count;
+  } else {
+    badge.style.display = "none";
+  }
+}
+
+function renderLaporanFailures(failures) {
+  const el = document.getElementById("laporanFailures");
+  if (!el) return;
+  if (!failures || failures.length === 0) { el.innerHTML = ""; return; }
+  el.innerHTML = `
+    <section>
+      <h2>Gagal Diproses</h2>
+      ${failures.map(f => {
+        const entry = f.entries || f.entry || {};
+        const content = entry.content || "(tanpa konten)";
+        const errorDetail = f.error_detail || f.error || "";
+        const btnId = "retryBtn_" + f.entry_id;
+        return `
+        <div class="card" style="border-left: 3px solid var(--lemon);">
+          <div style="font-size:13px; line-height:1.55;">${escapeHtml(content)}</div>
+          ${errorDetail ? `<div class="muted mono" style="margin-top:8px; font-size:11px; white-space:pre-wrap;">${escapeHtml(errorDetail)}</div>` : ""}
+          <div class="row" style="margin-top:12px;">
+            <button class="tiny" id="${btnId}" onclick="retryFailure('${f.entry_id}','${btnId}')">Coba Ulang</button>
+          </div>
+        </div>
+      `;
+      }).join("")}
+    </section>
+  `;
+}
+
+async function retryFailure(entryId, btnId) {
+  clearError();
+  const btn = document.getElementById(btnId);
+  let origText = "";
+  if (btn) { origText = btn.textContent; btn.disabled = true; btn.textContent = "Memproses..."; }
+  try {
+    await call("process-accounting-entry", { entry_id: entryId });
+    refreshLaporan();
+  } catch (err) {
+    showError(String(err.message || err));
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = origText || "Coba Ulang"; }
+  }
+}
+
+function renderCashPosition(cp) {
+  const el = document.getElementById("laporanCashPosition");
+  if (!el) return;
+  const kas = cp.cash !== undefined ? cp.cash : cp.kas;
+  const bank = cp.bank;
+  const total = cp.total !== undefined ? cp.total : (Number(kas || 0) + Number(bank || 0));
+  el.innerHTML = `
+    <div class="summary-grid">
+      <div class="summary-card">
+        <div class="summary-num">${escapeHtml(formatRupiah(kas))}</div>
+        <div class="summary-label">Kas</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-num">${escapeHtml(formatRupiah(bank))}</div>
+        <div class="summary-label">Bank</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-num">${escapeHtml(formatRupiah(total))}</div>
+        <div class="summary-label">Total</div>
+      </div>
+    </div>
+  `;
+}
+
+function renderPeriodSummary(ps) {
+  const el = document.getElementById("laporanPeriodSummary");
+  if (!el) return;
+  el.innerHTML = `
+    <div class="summary-grid" style="grid-template-columns: repeat(2, 1fr);">
+      <div class="summary-card">
+        <div class="summary-num">${escapeHtml(formatRupiah(ps.month_revenue))}</div>
+        <div class="summary-label">Pendapatan</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-num">${escapeHtml(formatRupiah(ps.month_expense))}</div>
+        <div class="summary-label">Beban</div>
+      </div>
+    </div>
+  `;
+}
+
+function renderAccountBalances(balances) {
+  const el = document.getElementById("laporanAccountBalances");
+  if (!el) return;
+  if (!balances || balances.length === 0) { el.innerHTML = '<p class="muted">Tidak ada data saldo akun.</p>'; return; }
+  el.innerHTML = balances.map(a => {
+    const code = a.code || a.account_code || "";
+    const name = a.name || a.account_name || "";
+    const balance = a.balance !== undefined ? a.balance : a.saldo;
+    const isSuspense = (a.type || a.account_type || "").toLowerCase() === "suspense";
+    return `
+    <div class="card flat">
+      <div style="display:flex; justify-content:space-between; gap:10px; align-items:center;">
+        <div style="flex:1; min-width:0;">
+          <div style="font-size:13px; font-weight:600;">${escapeHtml(name)} ${isSuspense ? '<span style="color: var(--lemon);">&#9679; suspense</span>' : ""}</div>
+          <div class="muted mono" style="margin-top:4px;">${escapeHtml(code)}</div>
+        </div>
+        <div class="mono" style="font-weight:600; ${isSuspense ? "color: var(--lemon);" : ""}">${escapeHtml(formatRupiah(balance))}</div>
+      </div>
+    </div>
+  `;
+  }).join("");
+}
+
+function renderInventory(items) {
+  const el = document.getElementById("laporanInventory");
+  if (!el) return;
+  if (!items || items.length === 0) { el.innerHTML = '<p class="muted">Tidak ada data stok barang.</p>'; return; }
+  el.innerHTML = items.map(it => {
+    const name = it.name || it.item_name || "(tanpa nama)";
+    const stock = it.stock !== undefined ? it.stock : it.quantity;
+    const unit = it.unit || "";
+    const category = it.category || "";
+    const lastPrice = it.last_unit_price;
+    const isLow = Number(stock) <= 0;
+    return `
+    <div class="card flat">
+      <div style="display:flex; justify-content:space-between; gap:10px; align-items:center;">
+        <div style="flex:1; min-width:0; ${isLow ? "color: var(--muted);" : ""}">
+          <div style="font-size:13px; font-weight:600;">${escapeHtml(name)}</div>
+          <div class="muted mono" style="margin-top:4px;">${escapeHtml(category)}</div>
+        </div>
+        <div style="text-align:right;">
+          <div class="mono" style="font-weight:600; ${isLow ? "color: var(--muted);" : ""}">${escapeHtml(String(stock))} ${escapeHtml(unit)}</div>
+          <div class="muted mono" style="margin-top:4px; font-size:11px;">${escapeHtml(formatRupiah(lastPrice))}</div>
+        </div>
+      </div>
+    </div>
+  `;
+  }).join("");
+}
+
+function renderTransactions(txs) {
+  const el = document.getElementById("laporanTransactions");
+  if (!el) return;
+  if (!txs || txs.length === 0) { el.innerHTML = '<p class="muted">Belum ada transaksi.</p>'; return; }
+  el.innerHTML = txs.map(t => {
+    const date = t.date || t.created_at || t.transaction_date;
+    const description = t.description || t.desc || "(tanpa deskripsi)";
+    const lines = t.lines || t.entries || t.details || [];
+    return `
+    <div class="card flat">
+      <div style="display:flex; justify-content:space-between; gap:10px;">
+        <div style="flex:1; min-width:0;">
+          <div style="font-size:13px; font-weight:600; line-height:1.5;">${escapeHtml(description)}</div>
+          <div class="muted mono" style="margin-top:4px;">${escapeHtml(timeAgo(date))}</div>
+        </div>
+      </div>
+      ${lines && lines.length ? `
+      <div style="margin-top:10px; display:flex; flex-direction:column; gap:4px;">
+        ${lines.map(l => {
+          const accName = l.account_name || l.account || "";
+          const debit = l.debit;
+          const credit = l.credit;
+          const isDebit = Number(debit) > 0;
+          return `
+          <div class="muted mono" style="font-size:11px; display:flex; justify-content:space-between;">
+            <span>${escapeHtml(accName)}</span>
+            <span style="color: ${isDebit ? 'var(--navy)' : 'var(--text)'};">${isDebit ? "D " + escapeHtml(formatRupiah(debit)) : "K " + escapeHtml(formatRupiah(credit))}</span>
+          </div>
+        `;
+        }).join("")}
+      </div>
+      ` : ""}
+    </div>
+  `;
+  }).join("");
 }
 
 // Auto-login kalau secret sudah tersimpan
