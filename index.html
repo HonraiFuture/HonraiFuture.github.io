@@ -410,6 +410,15 @@
         </div>
       </section>
 
+      <section>
+        <h2>Tanya Honrai</h2>
+        <div class="row">
+          <textarea id="askInput" placeholder="Tanya sesuatu tentang catatanmu..." rows="2"></textarea>
+          <button id="btnTanya" onclick="askHonrai()">Tanya</button>
+        </div>
+        <div id="askAnswerCard"></div>
+      </section>
+
       <button class="secondary" onclick="refresh()">&#8635; Refresh</button>
     </div>
 
@@ -727,6 +736,38 @@ async function submitInstruction() {
     if (btn) { btn.disabled = false; btn.textContent = origText || "Jadikan Instruksi AI"; }
     if (twin) twin.disabled = false;
   }
+}
+
+async function askHonrai() {
+  const inp = document.getElementById("askInput");
+  const question = inp ? inp.value.trim() : "";
+  if (!question) return;
+  clearNotice();
+  const btn = document.getElementById("btnTanya");
+  let origText = "";
+  if (btn) { origText = btn.textContent; btn.disabled = true; btn.textContent = "Berpikir... (bisa 1 menit)"; }
+  try {
+    const res = await call("synthesize", { question });
+    renderAskAnswer(res);
+  } catch (err) {
+    showError(String(err.message || err));
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = origText || "Tanya"; }
+  }
+}
+
+function renderAskAnswer(res) {
+  const el = document.getElementById("askAnswerCard");
+  if (!el) return;
+  const answer = res.answer || "";
+  const entriesUsed = res.entries_used;
+  const paragraphs = String(answer).split(/\n{2,}/).map(p => `<p style="margin:0 0 10px;">${escapeHtml(p)}</p>`).join("");
+  el.innerHTML = `
+    <div class="card">
+      <div style="line-height:1.7;">${paragraphs}</div>
+      ${entriesUsed !== undefined && entriesUsed !== null ? `<div class="muted" style="margin-top:8px;">Berdasarkan ${escapeHtml(String(entriesUsed))} catatan</div>` : ""}
+    </div>
+  `;
 }
 
 async function classifyEntry(id) {
