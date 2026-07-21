@@ -543,4 +543,129 @@ function renderEntries(entries) {
       <div style="display:flex; justify-content:space-between; gap:10px;">
         <div style="flex:1; min-width:0;">
           <div style="font-size:13px;">${escapeHtml(e.content || ("(" + e.type + ")"))}</div>
-          <div class="muted mono" style="margin-top:4px;">${new Date(e.created_at).toLocaleString("id-ID")}${e.classifications && e.classifications[0] ? " &middot; " + escapeHt
+          <div class="muted mono" style="margin-top:4px;">${new Date(e.created_at).toLocaleString("id-ID")}${e.classifications && e.classifications[0] ? " &middot; " + escapeHtml(e.classifications[0].category || "") : ""}</div>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:6px; align-items:flex-end;">
+          <span class="status">${escapeHtml(e.status || "new")}</span>
+          ${e.status === "new" ? `<button class="tiny" onclick="classifyEntry('${e.id}')">Klasifikasi</button>` : ""}
+        </div>
+      </div>
+    </div>
+  `).join("");
+}
+
+function renderPending(pending) {
+  const el = document.getElementById("pendingList");
+  if (pending.length === 0) { el.innerHTML = '<p class="muted">Tidak ada yang menunggu keputusan.</p>'; return; }
+  el.innerHTML = pending.map(p => {
+    const summary = p.summary || p.description || p.title || "(tanpa deskripsi)";
+    const target = p.target_table || p.target || "";
+    const diff = p.diff || p.changes || p.payload;
+    let diffStr = "";
+    if (diff) {
+      try { diffStr = typeof diff === "string" ? diff : JSON.stringify(diff, null, 2); }
+      catch (e) { diffStr = String(diff); }
+    }
+    return `
+    <div class="card pending">
+      <div style="display:flex; justify-content:space-between; gap:10px; align-items:flex-start;">
+        <div style="flex:1; min-width:0;">
+          <div style="font-size:13px; font-weight:600;">${escapeHtml(summary)}</div>
+          ${target ? `<div class="muted mono" style="margin-top:4px;">${escapeHtml(target)}</div>` : ""}
+          <div class="muted mono" style="margin-top:4px;">${p.created_at ? new Date(p.created_at).toLocaleString("id-ID") : ""} &middot; ${escapeHtml(p.status || "pending")}</div>
+        </div>
+      </div>
+      ${diffStr ? `<pre class="mono" style="margin-top:10px; background:#f5f5f5; padding:10px; border-radius:6px; font-size:11px; overflow-x:auto; white-space:pre-wrap;">${escapeHtml(diffStr)}</pre>` : ""}
+      <div class="row" style="margin-top:10px;">
+        <button class="tiny" onclick="decide('${p.id}','approve')">Setujui</button>
+        <button class="secondary tiny" onclick="decide('${p.id}','reject')">Tolak</button>
+        <button class="secondary tiny" onclick="decide('${p.id}','refine')">Revisi</button>
+        <button class="secondary tiny" onclick="triggerRevision('${p.id}')">Auto-Revisi</button>
+      </div>
+    </div>
+  `;
+  }).join("");
+}
+
+function renderClarifications(clarifications) {
+  const el = document.getElementById("clarificationsList");
+  if (!clarifications || clarifications.length === 0) {
+    el.innerHTML = '<p class="muted">Tidak ada klarifikasi yang menunggu.</p>';
+    return;
+  }
+  el.innerHTML = clarifications.map(c => {
+    const question = c.question || c.prompt || c.message || "(tanpa pertanyaan)";
+    const context = c.context || c.entry_content || "";
+    const inputId = "clarInput_" + c.id;
+    return `
+    <div class="card pending">
+      <div style="font-size:13px; font-weight:600;">${escapeHtml(question)}</div>
+      ${context ? `<div class="muted" style="margin-top:6px;">${escapeHtml(context)}</div>` : ""}
+      <div class="muted mono" style="margin-top:4px;">${c.created_at ? new Date(c.created_at).toLocaleString("id-ID") : ""} &middot; ${escapeHtml(c.status || "pending")}</div>
+      <div class="row" style="margin-top:10px;">
+        <input id="${inputId}" placeholder="Jawaban..." />
+        <button class="tiny" onclick="answerClarification('${c.id}','${inputId}')">Kirim</button>
+      </div>
+    </div>
+  `;
+  }).join("");
+}
+
+function renderAccountProposals(proposals) {
+  const el = document.getElementById("accountProposalsList");
+  if (!proposals || proposals.length === 0) {
+    el.innerHTML = '<p class="muted">Tidak ada usulan akun baru.</p>';
+    return;
+  }
+  el.innerHTML = proposals.map(p => {
+    const name = p.account_name || p.name || p.proposed_name || "(tanpa nama)";
+    const code = p.account_code || p.code || "";
+    const type = p.account_type || p.type || "";
+    const reason = p.reason || p.rationale || p.description || "";
+    return `
+    <div class="card pending">
+      <div style="font-size:13px; font-weight:600;">${escapeHtml(name)}${code ? ` <span class="muted mono">(${escapeHtml(code)})</span>` : ""}</div>
+      ${type ? `<div class="muted mono" style="margin-top:4px;">${escapeHtml(type)}</div>` : ""}
+      ${reason ? `<div class="muted" style="margin-top:6px;">${escapeHtml(reason)}</div>` : ""}
+      <div class="muted mono" style="margin-top:4px;">${p.created_at ? new Date(p.created_at).toLocaleString("id-ID") : ""} &middot; ${escapeHtml(p.status || "pending")}</div>
+      <div class="row" style="margin-top:10px;">
+        <button class="tiny" onclick="reviewAccountProposal('${p.id}','approve')">Setujui</button>
+        <button class="secondary tiny" onclick="reviewAccountProposal('${p.id}','reject')">Tolak</button>
+      </div>
+    </div>
+  `;
+  }).join("");
+}
+
+function escapeHtml(str) {
+  if (str === null || str === undefined) return "";
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+// Auto-login kalau secret sudah tersimpan
+(function init() {
+  let saved = "";
+  try { saved = localStorage.getItem(SECRET_KEY) || ""; } catch (e) {}
+  if (saved) {
+    SECRET = saved;
+    const inp = document.getElementById("secretInput");
+    if (inp) inp.value = saved;
+    call("list-entries", { limit: 1 })
+      .then(() => {
+        document.getElementById("loginView").style.display = "none";
+        document.getElementById("mainView").style.display = "block";
+        refresh();
+      })
+      .catch(() => {
+        // secret tersimpan tapi tidak valid; biarkan di login view
+      });
+  }
+})();
+</script>
+</body>
+</html>
