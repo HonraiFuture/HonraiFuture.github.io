@@ -601,6 +601,7 @@ async function connect() {
     document.getElementById("loginView").style.display = "none";
     document.getElementById("mainView").style.display = "block";
     refresh();
+    loadLatestAnswer();
   } catch (err) {
     showError("Gagal connect: " + (err.message || err) + "\\n\\nKalau pesannya 'Failed to fetch', berarti koneksi ke Supabase-nya sendiri yang gagal (jaringan/CORS/domain). Kalau pesannya 'Unauthorized', berarti APP_SECRET salah.");
     debug("Error detail: " + (err.stack || err));
@@ -748,7 +749,7 @@ async function askHonrai() {
   if (btn) { origText = btn.textContent; btn.disabled = true; btn.textContent = "Berpikir... (bisa 1 menit)"; }
   try {
     const res = await call("synthesize", { question });
-    renderAskAnswer(res);
+    renderAskAnswer(res, question);
   } catch (err) {
     showError(String(err.message || err));
   } finally {
@@ -756,19 +757,33 @@ async function askHonrai() {
   }
 }
 
-function renderAskAnswer(res) {
+function renderAskAnswer(res, question) {
   const el = document.getElementById("askAnswerCard");
   if (!el) return;
   const answer = res.answer || "";
   const entriesUsed = res.entries_used;
+  const q = question !== undefined ? question : res.question;
   const paragraphs = String(answer).split(/\n{2,}/).map(p => `<p style="margin:0 0 10px;">${escapeHtml(p)}</p>`).join("");
   el.innerHTML = `
     <div class="card">
+      ${q ? `<div class="muted" style="margin-bottom:8px;">Pertanyaan: ${escapeHtml(q)}</div>` : ""}
       <div style="line-height:1.7;">${paragraphs}</div>
       ${entriesUsed !== undefined && entriesUsed !== null ? `<div class="muted" style="margin-top:8px;">Berdasarkan ${escapeHtml(String(entriesUsed))} catatan</div>` : ""}
     </div>
   `;
 }
+
+async function loadLatestAnswer() {
+  try {
+    const res = await call("get-latest-answer", {});
+    if (res && res.answer !== undefined && res.answer !== null) {
+      renderAskAnswer(res, res.question);
+    }
+  } catch (err) {
+    // gagal diam-diam, jangan ganggu UI utama
+  }
+}
+=======
 
 async function classifyEntry(id) {
   try {
@@ -1194,6 +1209,7 @@ function renderTransactions(txs) {
         document.getElementById("loginView").style.display = "none";
         document.getElementById("mainView").style.display = "block";
         refresh();
+        loadLatestAnswer();
       })
       .catch(() => {
         // secret tersimpan tapi tidak valid; biarkan di login view
