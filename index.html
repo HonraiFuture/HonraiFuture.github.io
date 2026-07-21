@@ -16,6 +16,15 @@
     --lemon: #f0d030;
     --mono: ui-monospace, "SF Mono", Menlo, monospace;
     --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+    /* elevation tokens */
+    --shadow-card: 0 1px 2px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.04);
+    --shadow-card-hover: 0 2px 4px rgba(0,0,0,0.06), 0 8px 22px rgba(0,0,0,0.07);
+    --shadow-card-strong: 0 1px 2px rgba(0,0,0,0.05), 0 6px 18px rgba(0,0,0,0.07);
+    --shadow-card-strong-hover: 0 2px 5px rgba(0,0,0,0.07), 0 10px 28px rgba(0,0,0,0.10);
+
+    /* motion */
+    --ease-soft: cubic-bezier(0.22, 0.61, 0.36, 1);
   }
   * { box-sizing: border-box; }
   body {
@@ -24,33 +33,39 @@
     color: var(--text);
     font-family: var(--sans);
     padding: 24px 16px 80px;
+    line-height: 1.55;
     -webkit-font-smoothing: antialiased;
   }
   .wrap { max-width: 640px; margin: 0 auto; }
 
   /* HEADER / BRANDING */
-  .brandbar { display: flex; align-items: center; gap: 12px; margin-bottom: 22px; }
+  .brandbar { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
   .logo {
     width: 34px; height: 34px; border-radius: 50%;
     background: #000000;
     border: 2px solid var(--navy);
     flex-shrink: 0;
     position: relative;
+    animation: logoIn 0.5s var(--ease-soft) both;
   }
-  .brand-text { display: flex; flex-direction: column; line-height: 1.1; }
+  @keyframes logoIn {
+    from { opacity: 0; transform: scale(0.8); }
+    to { opacity: 1; transform: scale(1); }
+  }
+  .brand-text { display: flex; flex-direction: column; line-height: 1.15; }
   .brand-title { font-size: 22px; font-weight: 700; color: var(--navy); letter-spacing: 0.5px; }
   .brand-sub { font-size: 11px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; margin-top: 2px; }
   .live-dot {
     width: 9px; height: 9px; border-radius: 50%;
     background: var(--lemon);
     margin-left: auto;
-    box-shadow: 0 0 0 0 rgba(240, 208, 48, 0.6);
-    animation: pulse 2s infinite;
+    box-shadow: 0 0 0 0 rgba(240, 208, 48, 0.5);
+    animation: pulse 2.6s ease-in-out infinite;
     align-self: center;
   }
   @keyframes pulse {
-    0% { box-shadow: 0 0 0 0 rgba(240, 208, 48, 0.55); }
-    70% { box-shadow: 0 0 0 8px rgba(240, 208, 48, 0); }
+    0% { box-shadow: 0 0 0 0 rgba(240, 208, 48, 0.4); }
+    70% { box-shadow: 0 0 0 7px rgba(240, 208, 48, 0); }
     100% { box-shadow: 0 0 0 0 rgba(240, 208, 48, 0); }
   }
 
@@ -64,9 +79,14 @@
     border-radius: 8px;
     font-size: 14px;
     font-family: var(--sans);
-    transition: border-color 0.2s ease;
+    line-height: 1.5;
+    transition: border-color 0.2s var(--ease-soft), box-shadow 0.2s var(--ease-soft);
   }
-  input:focus, textarea:focus { outline: none; border-color: var(--navy); }
+  input:focus, textarea:focus {
+    outline: none;
+    border-color: var(--navy);
+    box-shadow: 0 0 0 3px rgba(21, 34, 56, 0.12);
+  }
   input::placeholder, textarea::placeholder { color: var(--muted); }
 
   /* BUTTONS */
@@ -80,11 +100,12 @@
     font-size: 13px;
     cursor: pointer;
     font-family: var(--sans);
-    transition: filter 0.2s ease, background 0.2s ease, opacity 0.2s ease;
+    transition: filter 0.18s var(--ease-soft), background 0.18s var(--ease-soft), opacity 0.18s var(--ease-soft), transform 0.1s var(--ease-soft);
     min-height: 40px;
   }
   button:hover { filter: brightness(1.15); }
-  button:disabled { opacity: 0.4; cursor: not-allowed; }
+  button:active { transform: scale(0.97); }
+  button:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
   button.secondary { background: transparent; border: 1px solid var(--border); color: var(--text); }
   button.secondary:hover { filter: none; border-color: var(--muted); background: #f2f2f2; }
   /* Tombol kecil: font tetap kecil, area sentuh diperbesar */
@@ -93,8 +114,8 @@
   .row { display: flex; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
 
   /* STATUS / MESSAGE BOXES */
-  .status { font-size: 11px; padding: 4px 8px; border: 1px solid var(--border); border-radius: 4px; text-transform: uppercase; color: var(--muted); font-family: var(--mono); }
-  #debugBox { background: var(--card); border: 1px solid var(--border); color: var(--muted); padding: 10px 14px; border-radius: 8px; font-size: 11px; margin-bottom: 16px; display: none; white-space: pre-wrap; font-family: var(--mono); }
+  .status { font-size: 11px; padding: 4px 8px; border: 1px solid var(--border); border-radius: 4px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); font-family: var(--mono); }
+  #debugBox { background: var(--card); border: 1px solid var(--border); color: var(--muted); padding: 10px 14px; border-radius: 8px; font-size: 11px; margin-bottom: 16px; display: none; white-space: pre-wrap; font-family: var(--mono); box-shadow: var(--shadow-card); }
 
   /* TOAST CONTAINER */
   #toastWrap {
@@ -116,10 +137,11 @@
     border-radius: 10px;
     padding: 12px 40px 12px 14px;
     font-size: 12px;
+    line-height: 1.5;
     white-space: pre-wrap;
     box-shadow: 0 6px 24px rgba(0,0,0,0.18);
     position: relative;
-    animation: toastIn 0.28s ease;
+    animation: toastIn 0.28s var(--ease-soft);
   }
   .toast.error { background: #fff; border: 1px solid #d13b2a; color: #b3392a; font-family: var(--mono); }
   .toast.notice { background: var(--card); border: 1px solid var(--navy); border-left: 3px solid var(--navy); color: var(--text); }
@@ -143,25 +165,39 @@
     to { opacity: 1; transform: translateY(0); }
   }
 
-  section { margin-bottom: 28px; }
-  section h2 { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin: 0 0 12px; font-weight: 600; }
+  section { margin-bottom: 32px; }
+  section h2 { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin: 0 0 16px; font-weight: 600; }
 
-  .card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 14px; margin-bottom: 10px; }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 12px;
+    line-height: 1.55;
+    box-shadow: var(--shadow-card);
+    transition: box-shadow 0.2s var(--ease-soft), transform 0.2s var(--ease-soft);
+  }
+  .card:hover { box-shadow: var(--shadow-card-hover); }
   .card.flat { border: 1px solid var(--border); background: #fdfdfd; }
-  .card.pending { border-left: 3px solid var(--navy); }
+  .card.pending {
+    border-left: 3px solid var(--navy);
+    box-shadow: var(--shadow-card-strong);
+  }
+  .card.pending:hover { box-shadow: var(--shadow-card-strong-hover); }
 
   .muted { color: var(--muted); font-size: 12px; }
   .mono { font-family: var(--mono); }
   a { color: var(--navy); }
 
-  .secretbar { display:flex; justify-content:flex-end; margin-bottom: 12px; }
+  .secretbar { display:flex; justify-content:flex-end; margin-bottom: 16px; }
 
   /* TABS */
   .tabs {
     display: flex;
     gap: 4px;
     border-bottom: 1px solid var(--border);
-    margin-bottom: 22px;
+    margin-bottom: 24px;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
@@ -179,7 +215,7 @@
     padding: 10px 14px;
     cursor: pointer;
     border-radius: 0;
-    transition: color 0.2s ease, border-color 0.2s ease;
+    transition: color 0.2s var(--ease-soft), border-color 0.2s var(--ease-soft);
     display: inline-flex;
     align-items: center;
     gap: 6px;
@@ -187,7 +223,8 @@
     flex-shrink: 0;
     min-height: 40px;
   }
-  .tab:hover { filter: none; color: var(--text); background: transparent; }
+  .tab:hover { filter: none; color: var(--text); background: transparent; transform: none; }
+  .tab:active { transform: none; }
   .tab.active { color: var(--navy); border-bottom-color: var(--navy); }
 
   /* BADGES / COUNTERS */
@@ -204,26 +241,88 @@
   }
 
   /* SUMMARY (Beranda) */
-  .summary-grid { display: flex; gap: 10px; margin-bottom: 24px; flex-wrap: wrap; }
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 32px;
+  }
+  @media (max-width: 480px) {
+    .summary-grid { grid-template-columns: 1fr; }
+  }
   .summary-card {
-    flex: 1; min-width: 120px;
     background: var(--card);
     border: 1px solid var(--border);
     border-radius: 10px;
-    padding: 16px 14px;
+    padding: 20px 16px;
+    box-shadow: var(--shadow-card);
+    transition: box-shadow 0.2s var(--ease-soft), transform 0.2s var(--ease-soft);
   }
-  .summary-num { font-family: var(--mono); font-size: 28px; font-weight: 700; color: var(--navy); line-height: 1; }
+  .summary-card:hover { box-shadow: var(--shadow-card-hover); }
+  .summary-num { font-family: var(--mono); font-size: 34px; font-weight: 700; color: var(--navy); line-height: 1; letter-spacing: -0.5px; }
   .summary-num.attn { color: var(--text); }
-  .summary-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-top: 8px; }
+  .summary-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 1.5px; margin-top: 12px; }
 
   /* TAB PANELS + FADE */
-  .panel { display: none; animation: fadeIn 0.3s ease; }
-  .panel.active { display: block; }
+  .panel { display: none; }
+  .panel.active { display: block; animation: fadeIn 0.28s var(--ease-soft); }
   @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+  /* MOTION MASUK: card fade + rise, stagger */
+  .panel.active .card,
+  .panel.active .summary-card {
+    animation: cardRise 0.28s var(--ease-soft) both;
+  }
+  @keyframes cardRise {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .panel.active .card:nth-child(1),
+  .panel.active .summary-card:nth-child(1) { animation-delay: 0.02s; }
+  .panel.active .card:nth-child(2),
+  .panel.active .summary-card:nth-child(2) { animation-delay: 0.06s; }
+  .panel.active .card:nth-child(3),
+  .panel.active .summary-card:nth-child(3) { animation-delay: 0.10s; }
+  .panel.active .card:nth-child(4) { animation-delay: 0.14s; }
+  .panel.active .card:nth-child(5) { animation-delay: 0.18s; }
+  .panel.active .card:nth-child(6) { animation-delay: 0.22s; }
+  .panel.active .card:nth-child(n+7) { animation-delay: 0.26s; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .logo, .panel.active, .panel.active .card, .panel.active .summary-card, .live-dot, .toast { animation: none !important; }
+    button:active { transform: none; }
+  }
+
+  /* SKELETON LOADING */
+  .skeleton-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 12px;
+    box-shadow: var(--shadow-card);
+  }
+  .sk-line {
+    height: 12px;
+    border-radius: 6px;
+    background: linear-gradient(90deg, #eeeeee 25%, #f6f6f6 37%, #eeeeee 63%);
+    background-size: 400% 100%;
+    animation: shimmer 1.4s ease infinite;
+    margin-bottom: 10px;
+  }
+  .sk-line:last-child { margin-bottom: 0; }
+  .sk-line.w40 { width: 40%; }
+  .sk-line.w60 { width: 60%; }
+  .sk-line.w80 { width: 80%; }
+  .sk-line.short { height: 10px; }
+  @keyframes shimmer {
+    0% { background-position: 100% 50%; }
+    100% { background-position: 0 50%; }
+  }
 
   /* LOGIN */
   #loginView { max-width: 420px; margin: 0 auto; }
-  #loginView .login-head { text-align: center; margin-bottom: 26px; }
+  #loginView .login-head { text-align: center; margin-bottom: 28px; }
   #loginView .brandbar { justify-content: center; }
   #loginView .live-dot { display: none; }
 </style>
@@ -315,7 +414,7 @@
     <div class="panel" id="panelEntries">
       <section>
         <h2>Log entries</h2>
-        <div id="entriesList"><p class="muted">Memuat...</p></div>
+        <div id="entriesList"></div>
       </section>
       <button class="secondary" onclick="refresh()">&#8635; Refresh</button>
     </div>
@@ -324,7 +423,7 @@
     <div class="panel" id="panelPending">
       <section>
         <h2>Menunggu keputusan</h2>
-        <div id="pendingList"><p class="muted">Memuat...</p></div>
+        <div id="pendingList"></div>
       </section>
       <button class="secondary" onclick="refresh()">&#8635; Refresh</button>
     </div>
@@ -333,11 +432,11 @@
     <div class="panel" id="panelAkuntansi">
       <section>
         <h2>Perlu klarifikasi</h2>
-        <div id="clarificationsList"><p class="muted">Memuat...</p></div>
+        <div id="clarificationsList"></div>
       </section>
       <section>
         <h2>Usulan akun baru</h2>
-        <div id="accountProposalsList"><p class="muted">Memuat...</p></div>
+        <div id="accountProposalsList"></div>
       </section>
       <button class="secondary" onclick="refresh()">&#8635; Refresh</button>
     </div>
@@ -355,6 +454,19 @@ const SECRET_KEY = "aios_app_secret";
 let SECRET = "";
 
 let currentErrorToast = null;
+
+function skeleton(n) {
+  n = n || 3;
+  let out = "";
+  for (let i = 0; i < n; i++) {
+    out += '<div class="skeleton-card">'
+      + '<div class="sk-line w80"></div>'
+      + '<div class="sk-line short w40"></div>'
+      + '<div class="sk-line short w60"></div>'
+      + '</div>';
+  }
+  return out;
+}
 
 function switchTab(name) {
   const map = {
@@ -468,6 +580,10 @@ function changeSecret() {
 
 async function refresh() {
   clearError();
+  const entriesEl = document.getElementById("entriesList");
+  const pendingEl = document.getElementById("pendingList");
+  if (entriesEl) entriesEl.innerHTML = skeleton(3);
+  if (pendingEl) pendingEl.innerHTML = skeleton(2);
   try {
     const e = await call("list-entries", { limit: 20 });
     const p = await call("list-pending-edits", {});
@@ -484,6 +600,10 @@ async function refresh() {
 }
 
 async function refreshAkuntansi() {
+  const clarEl = document.getElementById("clarificationsList");
+  const propEl = document.getElementById("accountProposalsList");
+  if (clarEl) clarEl.innerHTML = skeleton(2);
+  if (propEl) propEl.innerHTML = skeleton(2);
   try {
     const c = await call("list-clarifications", {});
     const clarifications = c.clarifications || [];
@@ -669,8 +789,8 @@ function renderEntries(entries) {
     <div class="card flat">
       <div style="display:flex; justify-content:space-between; gap:10px;">
         <div style="flex:1; min-width:0;">
-          <div style="font-size:13px;">${escapeHtml(e.content || ("(" + e.type + ")"))}</div>
-          <div class="muted mono" style="margin-top:4px;">${escapeHtml(timeAgo(e.created_at))}${e.classifications && e.classifications[0] ? " &middot; " + escapeHtml(e.classifications[0].category || "") : ""}</div>
+          <div style="font-size:13px; line-height:1.55;">${escapeHtml(e.content || ("(" + e.type + ")"))}</div>
+          <div class="muted mono" style="margin-top:6px;">${escapeHtml(timeAgo(e.created_at))}${e.classifications && e.classifications[0] ? " &middot; " + escapeHtml(e.classifications[0].category || "") : ""}</div>
         </div>
         <div style="display:flex; flex-direction:column; gap:6px; align-items:flex-end;">
           <span class="status">${escapeHtml(e.status || "new")}</span>
@@ -697,13 +817,13 @@ function renderPending(pending) {
     <div class="card pending">
       <div style="display:flex; justify-content:space-between; gap:10px; align-items:flex-start;">
         <div style="flex:1; min-width:0;">
-          <div style="font-size:13px; font-weight:600;">${escapeHtml(summary)}</div>
-          ${target ? `<div class="muted mono" style="margin-top:4px;">${escapeHtml(target)}</div>` : ""}
+          <div style="font-size:14px; font-weight:600; line-height:1.5;">${escapeHtml(summary)}</div>
+          ${target ? `<div class="muted mono" style="margin-top:6px;">${escapeHtml(target)}</div>` : ""}
           <div class="muted mono" style="margin-top:4px;">${escapeHtml(timeAgo(p.created_at))} &middot; ${escapeHtml(p.status || "pending")}</div>
         </div>
       </div>
-      ${diffStr ? `<pre class="mono" style="margin-top:10px; background:#f5f5f5; padding:10px; border-radius:6px; font-size:11px; overflow-x:auto; white-space:pre-wrap;">${escapeHtml(diffStr)}</pre>` : ""}
-      <div class="row" style="margin-top:10px;">
+      ${diffStr ? `<pre class="mono" style="margin-top:12px; background:#f5f5f5; padding:10px; border-radius:6px; font-size:11px; line-height:1.5; overflow-x:auto; white-space:pre-wrap;">${escapeHtml(diffStr)}</pre>` : ""}
+      <div class="row" style="margin-top:12px;">
         <button class="tiny" onclick="decide('${p.id}','approve')">Setujui</button>
         <button class="secondary tiny" onclick="decide('${p.id}','decline')">Tolak</button>
         <button class="secondary tiny" onclick="decide('${p.id}','refine')">Revisi</button>
@@ -726,10 +846,10 @@ function renderClarifications(clarifications) {
     const inputId = "clarInput_" + c.id;
     return `
     <div class="card pending">
-      <div style="font-size:13px; font-weight:600;">${escapeHtml(question)}</div>
-      ${context ? `<div class="muted" style="margin-top:6px;">${escapeHtml(context)}</div>` : ""}
+      <div style="font-size:14px; font-weight:600; line-height:1.5;">${escapeHtml(question)}</div>
+      ${context ? `<div class="muted" style="margin-top:6px; line-height:1.55;">${escapeHtml(context)}</div>` : ""}
       <div class="muted mono" style="margin-top:4px;">${escapeHtml(timeAgo(c.created_at))} &middot; ${escapeHtml(c.status || "pending")}</div>
-      <div class="row" style="margin-top:10px;">
+      <div class="row" style="margin-top:12px;">
         <input id="${inputId}" placeholder="Jawaban..." />
         <button class="tiny" onclick="answerClarification('${c.id}','${inputId}')">Kirim</button>
       </div>
@@ -751,11 +871,11 @@ function renderAccountProposals(proposals) {
     const reason = p.reason || p.rationale || p.description || "";
     return `
     <div class="card pending">
-      <div style="font-size:13px; font-weight:600;">${escapeHtml(name)}${code ? ` <span class="muted mono">(${escapeHtml(code)})</span>` : ""}</div>
+      <div style="font-size:14px; font-weight:600; line-height:1.5;">${escapeHtml(name)}${code ? ` <span class="muted mono">(${escapeHtml(code)})</span>` : ""}</div>
       ${type ? `<div class="muted mono" style="margin-top:4px;">${escapeHtml(type)}</div>` : ""}
-      ${reason ? `<div class="muted" style="margin-top:6px;">${escapeHtml(reason)}</div>` : ""}
+      ${reason ? `<div class="muted" style="margin-top:6px; line-height:1.55;">${escapeHtml(reason)}</div>` : ""}
       <div class="muted mono" style="margin-top:4px;">${escapeHtml(timeAgo(p.created_at))} &middot; ${escapeHtml(p.status || "pending")}</div>
-      <div class="row" style="margin-top:10px;">
+      <div class="row" style="margin-top:12px;">
         <button class="tiny" onclick="reviewAccountProposal('${p.id}','approve')">Setujui</button>
         <button class="secondary tiny" onclick="reviewAccountProposal('${p.id}','decline')">Tolak</button>
       </div>
