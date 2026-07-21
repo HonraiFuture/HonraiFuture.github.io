@@ -81,20 +81,67 @@
     cursor: pointer;
     font-family: var(--sans);
     transition: filter 0.2s ease, background 0.2s ease, opacity 0.2s ease;
+    min-height: 40px;
   }
   button:hover { filter: brightness(1.15); }
   button:disabled { opacity: 0.4; cursor: not-allowed; }
   button.secondary { background: transparent; border: 1px solid var(--border); color: var(--text); }
   button.secondary:hover { filter: none; border-color: var(--muted); background: #f2f2f2; }
-  button.tiny { padding: 4px 10px; font-size: 11px; }
+  /* Tombol kecil: font tetap kecil, area sentuh diperbesar */
+  button.tiny { padding: 9px 14px; font-size: 11px; min-height: 40px; }
 
-  .row { display: flex; gap: 8px; margin-bottom: 8px; }
+  .row { display: flex; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
 
   /* STATUS / MESSAGE BOXES */
   .status { font-size: 11px; padding: 4px 8px; border: 1px solid var(--border); border-radius: 4px; text-transform: uppercase; color: var(--muted); font-family: var(--mono); }
-  #errorBox, #errorBox2 { background: #fff; border: 1px solid #d13b2a; color: #b3392a; padding: 10px 14px; border-radius: 8px; font-size: 12px; margin-bottom: 16px; display: none; white-space: pre-wrap; font-family: var(--mono); }
   #debugBox { background: var(--card); border: 1px solid var(--border); color: var(--muted); padding: 10px 14px; border-radius: 8px; font-size: 11px; margin-bottom: 16px; display: none; white-space: pre-wrap; font-family: var(--mono); }
-  #noticeBox { background: var(--card); border: 1px solid var(--navy); border-left: 3px solid var(--navy); color: var(--text); padding: 10px 14px; border-radius: 8px; font-size: 12px; margin-bottom: 16px; display: none; white-space: pre-wrap; }
+
+  /* TOAST CONTAINER */
+  #toastWrap {
+    position: fixed;
+    left: 0; right: 0;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 16px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 0 12px;
+    z-index: 9999;
+    pointer-events: none;
+  }
+  .toast {
+    pointer-events: auto;
+    max-width: 560px;
+    width: 100%;
+    border-radius: 10px;
+    padding: 12px 40px 12px 14px;
+    font-size: 12px;
+    white-space: pre-wrap;
+    box-shadow: 0 6px 24px rgba(0,0,0,0.18);
+    position: relative;
+    animation: toastIn 0.28s ease;
+  }
+  .toast.error { background: #fff; border: 1px solid #d13b2a; color: #b3392a; font-family: var(--mono); }
+  .toast.notice { background: var(--card); border: 1px solid var(--navy); border-left: 3px solid var(--navy); color: var(--text); }
+  .toast .toast-close {
+    position: absolute;
+    top: 6px; right: 8px;
+    background: transparent;
+    border: none;
+    color: inherit;
+    font-size: 16px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 4px 6px;
+    min-height: 0;
+    font-weight: 700;
+    opacity: 0.7;
+  }
+  .toast .toast-close:hover { filter: none; opacity: 1; background: transparent; }
+  @keyframes toastIn {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
 
   section { margin-bottom: 28px; }
   section h2 { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin: 0 0 12px; font-weight: 600; }
@@ -110,7 +157,17 @@
   .secretbar { display:flex; justify-content:flex-end; margin-bottom: 12px; }
 
   /* TABS */
-  .tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin-bottom: 22px; }
+  .tabs {
+    display: flex;
+    gap: 4px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 22px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .tabs::-webkit-scrollbar { display: none; height: 0; }
   .tab {
     background: transparent;
     border: none;
@@ -126,6 +183,9 @@
     display: inline-flex;
     align-items: center;
     gap: 6px;
+    white-space: nowrap;
+    flex-shrink: 0;
+    min-height: 40px;
   }
   .tab:hover { filter: none; color: var(--text); background: transparent; }
   .tab.active { color: var(--navy); border-bottom-color: var(--navy); }
@@ -191,7 +251,6 @@
       <input type="checkbox" id="rememberSecret" checked style="width:auto; margin-right:6px;" />
       Ingat secret di browser ini
     </label>
-    <div id="errorBox"></div>
     <div id="debugBox"></div>
   </div>
 
@@ -216,15 +275,12 @@
       <button class="tab active" id="tabBtnBeranda" onclick="switchTab('beranda')">Beranda</button>
       <button class="tab" id="tabBtnEntries" onclick="switchTab('entries')">Entries</button>
       <button class="tab" id="tabBtnPending" onclick="switchTab('pending')">
-        Menunggu Keputusan <span id="pendingBadge" class="badge" style="display:none;">0</span>
+        Keputusan <span id="pendingBadge" class="badge" style="display:none;">0</span>
       </button>
       <button class="tab" id="tabBtnAkuntansi" onclick="switchTab('akuntansi')">
         Akuntansi <span id="akuntansiBadge" class="badge" style="display:none;">0</span>
       </button>
     </div>
-
-    <div id="noticeBox"></div>
-    <div id="errorBox2"></div>
 
     <!-- PANEL: BERANDA -->
     <div class="panel active" id="panelBeranda">
@@ -247,8 +303,8 @@
         <h2>Catatan baru</h2>
         <div class="row">
           <input id="composeInput" placeholder="Tulis sesuatu..." />
-          <button onclick="submitEntry()">Kirim</button>
-          <button class="secondary" onclick="submitInstruction()">Jadikan Instruksi AI</button>
+          <button id="btnKirim" onclick="submitEntry()">Kirim</button>
+          <button id="btnInstruction" class="secondary" onclick="submitInstruction()">Jadikan Instruksi AI</button>
         </div>
       </section>
 
@@ -289,11 +345,16 @@
   </div>
 </div>
 
+<!-- TOAST CONTAINER -->
+<div id="toastWrap"></div>
+
 <script>
 const BASE_URL = "https://ppomgoflwpsyatmaynne.supabase.co/functions/v1";
 const ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBwb21nb2Zsd3BzeWF0bWF5bm5lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ0NzIxMzksImV4cCI6MjEwMDA0ODEzOX0.H2fO03O2-_QrjFbVaTcEN2KWHJ79I_sMbmKjdZ1Itsg";
 const SECRET_KEY = "aios_app_secret";
 let SECRET = "";
+
+let currentErrorToast = null;
 
 function switchTab(name) {
   const map = {
@@ -312,31 +373,52 @@ function switchTab(name) {
 }
 
 function showError(msg) {
-  const box = document.getElementById("errorBox");
-  const box2 = document.getElementById("errorBox2");
-  [box, box2].forEach(b => { if (b) { b.style.display = "block"; b.textContent = msg; } });
+  // error toast tetap sampai ditutup manual
+  const wrap = document.getElementById("toastWrap");
+  if (!wrap) return;
+  if (currentErrorToast && currentErrorToast.parentNode) {
+    currentErrorToast.parentNode.removeChild(currentErrorToast);
+  }
+  const toast = document.createElement("div");
+  toast.className = "toast error";
+  const span = document.createElement("span");
+  span.textContent = msg;
+  const close = document.createElement("button");
+  close.className = "toast-close";
+  close.setAttribute("aria-label", "Tutup");
+  close.textContent = "\u00d7";
+  close.onclick = () => { if (toast.parentNode) toast.parentNode.removeChild(toast); if (currentErrorToast === toast) currentErrorToast = null; };
+  toast.appendChild(span);
+  toast.appendChild(close);
+  wrap.appendChild(toast);
+  currentErrorToast = toast;
 }
 function clearError() {
-  const box = document.getElementById("errorBox");
-  const box2 = document.getElementById("errorBox2");
-  [box, box2].forEach(b => { if (b) { b.style.display = "none"; b.textContent = ""; } });
+  if (currentErrorToast && currentErrorToast.parentNode) {
+    currentErrorToast.parentNode.removeChild(currentErrorToast);
+  }
+  currentErrorToast = null;
 }
 function debug(msg) {
   const box = document.getElementById("debugBox");
+  if (!box) return;
   box.style.display = "block";
   box.textContent = msg;
 }
 function showNotice(msg) {
-  const box = document.getElementById("noticeBox");
-  if (!box) return;
-  box.style.display = "block";
-  box.textContent = msg;
+  // notice toast auto-hilang setelah 5 detik
+  const wrap = document.getElementById("toastWrap");
+  if (!wrap) return;
+  const toast = document.createElement("div");
+  toast.className = "toast notice";
+  toast.textContent = msg;
+  wrap.appendChild(toast);
+  setTimeout(() => {
+    if (toast.parentNode) toast.parentNode.removeChild(toast);
+  }, 5000);
 }
 function clearNotice() {
-  const box = document.getElementById("noticeBox");
-  if (!box) return;
-  box.style.display = "none";
-  box.textContent = "";
+  // notice bersifat sementara; tidak perlu aksi khusus
 }
 
 async function call(fn, payload) {
@@ -390,10 +472,11 @@ async function refresh() {
     const e = await call("list-entries", { limit: 20 });
     const p = await call("list-pending-edits", {});
     const entries = e.entries || [];
+    const stats = e.stats || {};
     const pending = p.pending_edits || [];
     renderEntries(entries);
     renderPending(pending);
-    updateSummary(entries, pending);
+    updateSummary(entries, pending, stats);
   } catch (err) {
     showError(String(err.message || err));
   }
@@ -427,9 +510,12 @@ function updateAkuntansiBadge(count) {
   }
 }
 
-function updateSummary(entries, pending) {
-  const total = entries.length;
-  const unclassified = entries.filter(e => e.status === "new").length;
+function updateSummary(entries, pending, stats) {
+  stats = stats || {};
+  const total = (stats.total_entries !== undefined && stats.total_entries !== null)
+    ? stats.total_entries : entries.length;
+  const unclassified = (stats.total_unclassified !== undefined && stats.total_unclassified !== null)
+    ? stats.total_unclassified : entries.filter(e => e.status === "new").length;
   const pendingCount = pending.length;
 
   document.getElementById("sumTotal").textContent = total;
@@ -449,12 +535,20 @@ async function submitEntry() {
   const text = document.getElementById("composeInput").value.trim();
   if (!text) return;
   clearNotice();
+  const btn = document.getElementById("btnKirim");
+  const twin = document.getElementById("btnInstruction");
+  let origText = "";
+  if (btn) { origText = btn.textContent; btn.disabled = true; btn.textContent = "Mengirim..."; }
+  if (twin) twin.disabled = true;
   try {
     await call("ingest", { type: "text", content: text, metadata: { source: "standalone_console" } });
     document.getElementById("composeInput").value = "";
     refresh();
   } catch (err) {
     showError(String(err.message || err));
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = origText || "Kirim"; }
+    if (twin) twin.disabled = false;
   }
 }
 
@@ -463,16 +557,24 @@ async function submitInstruction() {
   if (!text) return;
   clearNotice();
   clearError();
+  const btn = document.getElementById("btnInstruction");
+  const twin = document.getElementById("btnKirim");
+  let origText = "";
+  if (btn) { origText = btn.textContent; btn.disabled = true; btn.textContent = "AI sedang bekerja... (bisa 1 menit)"; }
+  if (twin) twin.disabled = true;
   try {
-    const ingested = await call("ingest", { type: "text", content: text, metadata: { source: "standalone_console", is_instruction: true } });
+    const ingested = await call("ingest", { type: "text", content: text, skip_accounting: true, metadata: { source: "standalone_console", is_instruction: true } });
     const entryId = ingested.entry_id || (ingested.entry && ingested.entry.id) || ingested.id;
     if (!entryId) throw new Error("Gagal mendapatkan entry_id dari hasil ingest.");
     await call("interpret-instruction", { entry_id: entryId });
     document.getElementById("composeInput").value = "";
-    showNotice("Instruksi diterima. AI sedang menyusun PR (pending edit) untuk perubahan ini \\u2014 cek tab \"Menunggu Keputusan\" sebentar lagi.");
+    showNotice("Instruksi diterima. AI sedang menyusun PR (pending edit) untuk perubahan ini \\u2014 cek tab \"Keputusan\" sebentar lagi.");
     refresh();
   } catch (err) {
     showError(String(err.message || err));
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = origText || "Jadikan Instruksi AI"; }
+    if (twin) twin.disabled = false;
   }
 }
 
@@ -487,6 +589,9 @@ async function classifyEntry(id) {
 
 async function decide(id, decision) {
   try {
+    if (decision === "decline") {
+      if (!confirm("Yakin tolak permanen? PR akan ditutup.")) return;
+    }
     let feedback;
     if (decision === "refine") {
       feedback = prompt("Feedback buat revisi:");
@@ -527,12 +632,34 @@ async function reviewAccountProposal(id, decision) {
   clearNotice();
   clearError();
   try {
+    if (decision === "decline") {
+      if (!confirm("Yakin tolak permanen? PR akan ditutup.")) return;
+    }
     await call("review-account-proposal", { proposal_id: id, decision });
     showNotice(decision === "approve" ? "Usulan akun disetujui." : "Usulan akun ditolak.");
     refreshAkuntansi();
   } catch (err) {
     showError(String(err.message || err));
   }
+}
+
+function timeAgo(dateInput) {
+  if (!dateInput) return "";
+  const d = new Date(dateInput);
+  if (isNaN(d.getTime())) return "";
+  const now = new Date();
+  const diffMs = now - d;
+  const diffSec = Math.floor(diffMs / 1000);
+  const diffMin = Math.floor(diffSec / 60);
+  const diffHour = Math.floor(diffMin / 60);
+  const diffDay = Math.floor(diffHour / 24);
+
+  if (diffSec < 60) return "baru saja";
+  if (diffMin < 60) return diffMin + " mnt lalu";
+  if (diffHour < 24) return diffHour + " jam lalu";
+  if (diffDay === 1) return "kemarin";
+  // tanggal singkat "21/7"
+  return d.getDate() + "/" + (d.getMonth() + 1);
 }
 
 function renderEntries(entries) {
@@ -543,7 +670,7 @@ function renderEntries(entries) {
       <div style="display:flex; justify-content:space-between; gap:10px;">
         <div style="flex:1; min-width:0;">
           <div style="font-size:13px;">${escapeHtml(e.content || ("(" + e.type + ")"))}</div>
-          <div class="muted mono" style="margin-top:4px;">${new Date(e.created_at).toLocaleString("id-ID")}${e.classifications && e.classifications[0] ? " &middot; " + escapeHtml(e.classifications[0].category || "") : ""}</div>
+          <div class="muted mono" style="margin-top:4px;">${escapeHtml(timeAgo(e.created_at))}${e.classifications && e.classifications[0] ? " &middot; " + escapeHtml(e.classifications[0].category || "") : ""}</div>
         </div>
         <div style="display:flex; flex-direction:column; gap:6px; align-items:flex-end;">
           <span class="status">${escapeHtml(e.status || "new")}</span>
@@ -572,13 +699,13 @@ function renderPending(pending) {
         <div style="flex:1; min-width:0;">
           <div style="font-size:13px; font-weight:600;">${escapeHtml(summary)}</div>
           ${target ? `<div class="muted mono" style="margin-top:4px;">${escapeHtml(target)}</div>` : ""}
-          <div class="muted mono" style="margin-top:4px;">${p.created_at ? new Date(p.created_at).toLocaleString("id-ID") : ""} &middot; ${escapeHtml(p.status || "pending")}</div>
+          <div class="muted mono" style="margin-top:4px;">${escapeHtml(timeAgo(p.created_at))} &middot; ${escapeHtml(p.status || "pending")}</div>
         </div>
       </div>
       ${diffStr ? `<pre class="mono" style="margin-top:10px; background:#f5f5f5; padding:10px; border-radius:6px; font-size:11px; overflow-x:auto; white-space:pre-wrap;">${escapeHtml(diffStr)}</pre>` : ""}
       <div class="row" style="margin-top:10px;">
         <button class="tiny" onclick="decide('${p.id}','approve')">Setujui</button>
-        <button class="secondary tiny" onclick="decide('${p.id}','reject')">Tolak</button>
+        <button class="secondary tiny" onclick="decide('${p.id}','decline')">Tolak</button>
         <button class="secondary tiny" onclick="decide('${p.id}','refine')">Revisi</button>
         <button class="secondary tiny" onclick="triggerRevision('${p.id}')">Auto-Revisi</button>
       </div>
@@ -601,7 +728,7 @@ function renderClarifications(clarifications) {
     <div class="card pending">
       <div style="font-size:13px; font-weight:600;">${escapeHtml(question)}</div>
       ${context ? `<div class="muted" style="margin-top:6px;">${escapeHtml(context)}</div>` : ""}
-      <div class="muted mono" style="margin-top:4px;">${c.created_at ? new Date(c.created_at).toLocaleString("id-ID") : ""} &middot; ${escapeHtml(c.status || "pending")}</div>
+      <div class="muted mono" style="margin-top:4px;">${escapeHtml(timeAgo(c.created_at))} &middot; ${escapeHtml(c.status || "pending")}</div>
       <div class="row" style="margin-top:10px;">
         <input id="${inputId}" placeholder="Jawaban..." />
         <button class="tiny" onclick="answerClarification('${c.id}','${inputId}')">Kirim</button>
@@ -627,10 +754,10 @@ function renderAccountProposals(proposals) {
       <div style="font-size:13px; font-weight:600;">${escapeHtml(name)}${code ? ` <span class="muted mono">(${escapeHtml(code)})</span>` : ""}</div>
       ${type ? `<div class="muted mono" style="margin-top:4px;">${escapeHtml(type)}</div>` : ""}
       ${reason ? `<div class="muted" style="margin-top:6px;">${escapeHtml(reason)}</div>` : ""}
-      <div class="muted mono" style="margin-top:4px;">${p.created_at ? new Date(p.created_at).toLocaleString("id-ID") : ""} &middot; ${escapeHtml(p.status || "pending")}</div>
+      <div class="muted mono" style="margin-top:4px;">${escapeHtml(timeAgo(p.created_at))} &middot; ${escapeHtml(p.status || "pending")}</div>
       <div class="row" style="margin-top:10px;">
         <button class="tiny" onclick="reviewAccountProposal('${p.id}','approve')">Setujui</button>
-        <button class="secondary tiny" onclick="reviewAccountProposal('${p.id}','reject')">Tolak</button>
+        <button class="secondary tiny" onclick="reviewAccountProposal('${p.id}','decline')">Tolak</button>
       </div>
     </div>
   `;
