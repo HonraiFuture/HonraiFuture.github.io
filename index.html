@@ -372,6 +372,7 @@
     <!-- TABS -->
     <div class="tabs">
       <button class="tab active" id="tabBtnBeranda" onclick="switchTab('beranda')">Beranda</button>
+      <button class="tab" id="tabBtnMemori" onclick="switchTab('memori')">Memori</button>
       <button class="tab" id="tabBtnEntries" onclick="switchTab('entries')">Entries</button>
       <button class="tab" id="tabBtnPending" onclick="switchTab('pending')">
         Keputusan <span id="pendingBadge" class="badge" style="display:none;">0</span>
@@ -433,6 +434,24 @@ async function planWageTomorrow() {
       </section>
 
       <button class="secondary" onclick="refresh()">&#8635; Refresh</button>
+    </div>
+
+    <!-- PANEL: MEMORI -->
+    <div class="panel" id="panelMemori">
+      <div id="memorySummaryLine" class="muted" style="margin-bottom:16px;"></div>
+      <section>
+        <h2>Yang Kuketahui Tentangmu</h2>
+        <div id="memoryFactsList"></div>
+      </section>
+      <section>
+        <h2>Relasi</h2>
+        <div id="memoryRelationsList"></div>
+      </section>
+      <section>
+        <h2>Episode</h2>
+        <div id="memoryEpisodesList"></div>
+      </section>
+      <button class="secondary" onclick="refreshMemori()">&#8635; Refresh</button>
     </div>
 
     <!-- PANEL: ENTRIES -->
@@ -528,6 +547,7 @@ function skeleton(n) {
 function switchTab(name) {
   const map = {
     beranda: ["tabBtnBeranda", "panelBeranda"],
+    memori: ["tabBtnMemori", "panelMemori"],
     entries: ["tabBtnEntries", "panelEntries"],
     pending: ["tabBtnPending", "panelPending"],
     akuntansi: ["tabBtnAkuntansi", "panelAkuntansi"],
@@ -542,6 +562,7 @@ function switchTab(name) {
   document.getElementById(panel).classList.add("active");
   if (name === "laporan") refreshLaporan();
   if (name === "pending") refreshPendingTransactions();
+  if (name === "memori") refreshMemori();
 }
 
 function showError(msg) {
@@ -1350,6 +1371,149 @@ function renderTransactions(txs) {
     </div>
   `;
   }).join("");
+}
+
+async function refreshMemori() {
+  clearError();
+  const factsEl = document.getElementById("memoryFactsList");
+  const relEl = document.getElementById("memoryRelationsList");
+  const epEl = document.getElementById("memoryEpisodesList");
+  const sumEl = document.getElementById("memorySummaryLine");
+  if (factsEl) factsEl.innerHTML = skeleton(3);
+  if (relEl) relEl.innerHTML = skeleton(2);
+  if (epEl) epEl.innerHTML = skeleton(2);
+  if (sumEl) sumEl.textContent = "";
+  try {
+    const r = await call("memory-browse", { limit: 100 });
+    const summary = r.summary || {};
+    if (sumEl) {
+      sumEl.textContent = (summary.facts || 0) + " fakta \\u00b7 " + (summary.entities || 0) + " entitas \\u00b7 " + (summary.relations || 0) + " relasi \\u00b7 " + (summary.episodes || 0) + " episode";
+    }
+    renderMemoryFacts(r.facts || []);
+    renderMemoryRelations(r.relations || []);
+    renderMemoryEpisodes(r.episodes || []);
+  } catch (err) {
+    showError(String(err.message || err));
+  }
+}
+
+function renderMemoryFacts(facts) {
+  const el = document.getElementById("memoryFactsList");
+  if (!el) return;
+  if (!facts || facts.length === 0) {
+    el.innerHTML = '<p class="muted">Memori masih kosong. Mulai catat sesuatu, nanti aku ingat.</p>';
+    return;
+  }
+  el.innerHTML = facts.map(f => {
+    const catLine = [f.category, f.subcategory].filter(Boolean).join(" / ");
+    const metaBits = [];
+    if (catLine) metaBits.push(escapeHtml(catLine));
+    metaBits.push("salience " + escapeHtml(String(f.salience !== undefined && f.salience !== null ? f.salience : "")));
+    metaBits.push("diperkuat " + escapeHtml(String(f.reinforced_count !== undefined && f.reinforced_count !== null ? f.reinforced_count : 0)) + "x");
+    metaBits.push("dipakai " + escapeHtml(String(f.access_count !== undefined && f.access_count !== null ? f.access_count : 0)) + "x");
+    const sources = f.sources || [];
+    const sourcesId = "memSources_" + f.id;
+    const contentId = "memContent_" + f.id;
+    const importanceId = "memImportance_" + f.id;
+    return `
+    <div class="card">
+      <div style="font-size:14px; line-height:1.55;">${escapeHtml(f.content || "")}</div>
+      <div class="muted mono" style="margin-top:8px; font-size:11px;">${metaBits.join(" &middot; ")}</div>
+      ${sources.length ? `
+      <div style="margin-top:10px;">
+        <button class="secondary tiny" onclick="toggleMemSources('${sourcesId}')">Lihat asal</button>
+        <div id="${sourcesId}" style="display:none; margin-top:10px;">
+          ${sources.map(s => `<div class="muted mono" style="font-size:11px; margin-bottom:6px;">${escapeHtml(s.preview || "")} &middot; ${escapeHtml(timeAgo(s.created_at))}</div>`).join("")}
+        </div>
+      </div>
+      ` : ""}
+      <div id="memEditWrap_${f.id}" style="display:none; margin-top:12px;">
+        <textarea id="${contentId}" rows="2">${escapeHtml(f.content || "")}</textarea>
+        <input id="${importanceId}" type="number" min="0" max="1" step="0.01" value="${escapeHtml(String(f.importance !== undefined && f.importance !== null ? f.importance : ""))}" style="margin-top:8px;" />
+        <div class="row" style="margin-top:8px;">
+          <button class="tiny" onclick="saveMemoryFact('${f.id}','${contentId}','${importanceId}')">Simpan</button>
+          <button class="secondary tiny" onclick="toggleMemEdit('${f.id}')">Batal</button>
+        </div>
+      </div>
+      <div class="row" style="margin-top:12px;">
+        <button class="secondary tiny" onclick="toggleMemEdit('${f.id}')">Perbaiki</button>
+        <button class="secondary tiny" onclick="archiveMemoryFact('${f.id}')">Arsipkan</button>
+      </div>
+    </div>
+    `;
+  }).join("");
+}
+
+function toggleMemSources(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.style.display = el.style.display === "none" ? "block" : "none";
+}
+
+function toggleMemEdit(id) {
+  const el = document.getElementById("memEditWrap_" + id);
+  if (!el) return;
+  el.style.display = el.style.display === "none" ? "block" : "none";
+}
+
+async function saveMemoryFact(id, contentId, importanceId) {
+  clearNotice();
+  clearError();
+  const contentEl = document.getElementById(contentId);
+  const importanceEl = document.getElementById(importanceId);
+  const content = contentEl ? contentEl.value.trim() : "";
+  const importance = importanceEl && importanceEl.value !== "" ? Number(importanceEl.value) : undefined;
+  if (!content) return;
+  try {
+    const res = await call("memory-edit", { action: "update", memory_id: id, kind: "semantic", content, importance });
+    showNotice(res.message || "Fakta diperbarui.");
+    refreshMemori();
+  } catch (err) {
+    showError(String(err.message || err));
+  }
+}
+
+async function archiveMemoryFact(id) {
+  clearNotice();
+  clearError();
+  if (!confirm("Fakta ini tidak akan dipakai menjawab lagi, tapi masih bisa dipulihkan.")) return;
+  try {
+    const res = await call("memory-edit", { action: "archive", memory_id: id, kind: "semantic" });
+    showNotice(res.message || "Fakta diarsipkan.");
+    refreshMemori();
+  } catch (err) {
+    showError(String(err.message || err));
+  }
+}
+
+function renderMemoryRelations(relations) {
+  const el = document.getElementById("memoryRelationsList");
+  if (!el) return;
+  if (!relations || relations.length === 0) {
+    el.innerHTML = '<p class="muted">Belum ada relasi.</p>';
+    return;
+  }
+  el.innerHTML = relations.map(r => `
+    <div class="card flat">
+      <div style="font-size:13px; line-height:1.55;">${escapeHtml(r.text || "")}</div>
+      <div class="muted mono" style="margin-top:6px; font-size:11px;">bobot ${escapeHtml(String(r.weight !== undefined && r.weight !== null ? r.weight : ""))}</div>
+    </div>
+  `).join("");
+}
+
+function renderMemoryEpisodes(episodes) {
+  const el = document.getElementById("memoryEpisodesList");
+  if (!el) return;
+  if (!episodes || episodes.length === 0) {
+    el.innerHTML = '<p class="muted">Belum ada episode.</p>';
+    return;
+  }
+  el.innerHTML = episodes.map(ep => `
+    <div class="card flat">
+      <div style="font-size:13px; line-height:1.55;">${escapeHtml(ep.summary || "")}</div>
+      <div class="muted mono" style="margin-top:6px; font-size:11px;">${escapeHtml(timeAgo(ep.occurred_at))}</div>
+    </div>
+  `).join("");
 }
 
 // Auto-login kalau secret sudah tersimpan
