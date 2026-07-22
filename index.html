@@ -408,6 +408,9 @@
           <button id="btnKirim" onclick="submitEntry()">Kirim</button>
           <button id="btnInstruction" class="secondary" onclick="submitInstruction()">Jadikan Instruksi AI</button>
         </div>
+        <div class="row">
+          <button class="secondary tiny" onclick="planWageTomorrow()">&#128181; Susun Rencana Upah Kerja Besok</button>
+        </div>
       </section>
 
       <section>
@@ -859,6 +862,15 @@ async function submitEntry() {
     if (btn) { btn.disabled = false; btn.textContent = origText || "Kirim"; }
     if (twin) twin.disabled = false;
   }
+}
+
+async function planWageTomorrow() {
+  const composeEl = document.getElementById("composeInput");
+  if (!composeEl) return;
+  const besok = new Date(Date.now() + 24 * 60 * 60 * 1000);
+  const tgl = besok.getDate() + "/" + (besok.getMonth() + 1) + "/" + besok.getFullYear();
+  composeEl.value = "Tolong bantu susun rencana keuangan untuk upah kerja besok (" + tgl + "). Hitung total upah yang perlu disiapkan berdasarkan data kas dan transaksi terakhir, siapkan alokasi dana, dan catat sebagai rencana pengeluaran di jurnal jika perlu.";
+  await submitInstruction();
 }
 
 async function submitInstruction() {
