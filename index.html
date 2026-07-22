@@ -411,17 +411,7 @@
         </div>
         <div class="row">
           <button class="secondary tiny" onclick="planWageTomorrow()">&#128181; Susun Rencana Upah Kerja Besok</button>
-          <button class="secondary tiny" onclick="planWageForDate('23/7/2026')">&#128181; Susun Rencana Upah 23/7/2026</button>
         </div>
-=======
-async function planWageTomorrow() {
-  const composeEl = document.getElementById("composeInput");
-  if (!composeEl) return;
-  const besok = new Date(Date.now() + 24 * 60 * 60 * 1000);
-  const tgl = besok.getDate() + "/" + (besok.getMonth() + 1) + "/" + besok.getFullYear();
-  composeEl.value = "Tolong bantu susun rencana keuangan untuk upah kerja besok (" + tgl + "). Hitung total upah yang perlu disiapkan berdasarkan data kas dan transaksi terakhir, siapkan alokasi dana, dan catat sebagai rencana pengeluaran di jurnal jika perlu.";
-  await submitInstruction();
-}
       </section>
 
       <section>
