@@ -434,6 +434,10 @@
     <!-- PANEL: PENDING -->
     <div class="panel" id="panelPending">
       <section>
+        <h2>Jurnal Menunggu Persetujuan</h2>
+        <div id="pendingTransactionsList"></div>
+      </section>
+      <section>
         <h2>Menunggu keputusan</h2>
         <div id="pendingList"></div>
       </section>
@@ -492,6 +496,8 @@ const SECRET_KEY = "aios_app_secret";
 let SECRET = "";
 
 let currentErrorToast = null;
+let pendingEditsCount = 0;
+let pendingTxCount = 0;
 
 function skeleton(n) {
   n = n || 3;
@@ -522,6 +528,7 @@ function switchTab(name) {
   document.getElementById(btn).classList.add("active");
   document.getElementById(panel).classList.add("active");
   if (name === "laporan") refreshLaporan();
+  if (name === "pending") refreshPendingTransactions();
 }
 
 function showError(msg) {
@@ -584,7 +591,11 @@ async function call(fn, payload) {
     body: JSON.stringify(payload || {}),
   });
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.error || (fn + " gagal (" + res.status + ")"));
+  if (!res.ok) {
+    const err = new Error(data.error || (fn + " gagal (" + res.status + ")"));
+    err.status = res.status;
+    throw err;
+  }
   return data;
 }
 
@@ -637,6 +648,7 @@ async function refresh() {
     showError(String(err.message || err));
   }
   refreshAkuntansi();
+  refreshPendingTransactions();
 }
 
 async function refreshAkuntansi() {
@@ -670,6 +682,148 @@ function updateAkuntansiBadge(count) {
   }
 }
 
+function updatePendingCombinedBadge() {
+  const badge = document.getElementById("pendingBadge");
+  if (!badge) return;
+  const total = (pendingEditsCount || 0) + (pendingTxCount || 0);
+  if (total > 0) {
+    badge.style.display = "inline-block";
+    badge.textContent = total;
+  } else {
+    badge.style.display = "none";
+  }
+}
+
+function formatRibuan(n) {
+  const num = Number(n) || 0;
+  const rounded = Math.round(num);
+  return Math.abs(rounded).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+}
+
+async function refreshPendingTransactions() {
+  const el = document.getElementById("pendingTransactionsList");
+  if (el) el.innerHTML = skeleton(2);
+  try {
+    const r = await call("list-pending-transactions", { status: "pending", limit: 50 });
+    const txs = r.pending_transactions || [];
+    renderPendingTransactions(txs);
+    pendingTxCount = r.count !== undefined && r.count !== null ? r.count : txs.length;
+    updatePendingCombinedBadge();
+  } catch (err) {
+    showError(String(err.message || err));
+  }
+}
+
+function renderPendingTransactions(txs) {
+  const el = document.getElementById("pendingTransactionsList");
+  if (!el) return;
+  if (!txs || txs.length === 0) {
+    el.innerHTML = '<p class="muted">Tidak ada jurnal yang menunggu persetujuan.</p>';
+    return;
+  }
+  el.innerHTML = txs.map(t => {
+    const lines = t.lines || [];
+    const movements = t.inventory_movements || [];
+    const proposal = t.account_proposal;
+    const linesHtml = lines.map(l => {
+      const debit = Number(l.debit) || 0;
+      const credit = Number(l.credit) || 0;
+      return `
+      <tr>
+        <td style="padding:4px 6px; font-size:12px; border-bottom:1px solid var(--border);">${escapeHtml(l.account_name || "")} <span class="muted mono" style="font-size:10px;">${escapeHtml(l.account_code || "")}</span></td>
+        <td style="padding:4px 6px; font-size:12px; text-align:right; border-bottom:1px solid var(--border);" class="mono">${debit > 0 ? escapeHtml(formatRibuan(debit)) : ""}</td>
+        <td style="padding:4px 6px; font-size:12px; text-align:right; border-bottom:1px solid var(--border);" class="mono">${credit > 0 ? escapeHtml(formatRibuan(credit)) : ""}</td>
+      </tr>
+      `;
+    }).join("");
+    const movementsHtml = movements.length ? `
+      <div style="margin-top:10px;">
+        <div class="muted" style="font-size:11px; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px;">Pergerakan Stok</div>
+        ${movements.map(m => {
+          const name = m.item_name || m.name || "(tanpa nama)";
+          const dir = m.direction || (Number(m.quantity) < 0 ? "keluar" : "masuk");
+          const qty = m.quantity !== undefined ? m.quantity : m.qty;
+          const unit = m.unit || "";
+          return `<div class="muted mono" style="font-size:11px;">${escapeHtml(name)} &middot; ${escapeHtml(dir)} ${escapeHtml(String(qty))} ${escapeHtml(unit)}</div>`;
+        }).join("")}
+      </div>
+    ` : "";
+    const proposalHtml = proposal ? `
+      <div style="margin-top:10px;">
+        <span class="badge">Usul akun baru: ${escapeHtml(proposal.proposed_name || proposal.name || "")}</span>
+      </div>
+    ` : "";
+    const declineInputId = "declineNote_" + t.id;
+    const amountAttr = escapeHtml(JSON.stringify(t.total_amount));
+    return `
+    <div class="card pending">
+      <div style="font-size:14px; font-weight:600; line-height:1.5;">${escapeHtml(t.description || "(tanpa deskripsi)")}</div>
+      <div class="mono" style="font-size:22px; font-weight:700; color: var(--navy); margin-top:6px;">${escapeHtml(formatRupiah(t.total_amount))}</div>
+      ${t.reason ? `<div class="muted" style="margin-top:4px; font-size:12px;">${escapeHtml(t.reason)}</div>` : ""}
+      <div class="muted mono" style="margin-top:4px; font-size:11px;">${escapeHtml(timeAgo(t.created_at))}</div>
+      ${lines.length ? `
+      <table style="width:100%; border-collapse:collapse; margin-top:12px;">
+        <thead>
+          <tr>
+            <th style="text-align:left; padding:4px 6px; font-size:10px; text-transform:uppercase; color:var(--muted); letter-spacing:0.5px;">Akun</th>
+            <th style="text-align:right; padding:4px 6px; font-size:10px; text-transform:uppercase; color:var(--muted); letter-spacing:0.5px;">Debit</th>
+            <th style="text-align:right; padding:4px 6px; font-size:10px; text-transform:uppercase; color:var(--muted); letter-spacing:0.5px;">Kredit</th>
+          </tr>
+        </thead>
+        <tbody>${linesHtml}</tbody>
+      </table>
+      ` : ""}
+      ${movementsHtml}
+      ${proposalHtml}
+      <div style="margin-top:12px;">
+        <input id="${declineInputId}" placeholder="Catatan alasan tolak (opsional)..." />
+        <div class="row" style="margin-top:8px;">
+          <button class="tiny" onclick='approvePendingTransaction("${t.id}", ${amountAttr})'>Setujui &amp; Bukukan</button>
+          <button class="secondary tiny" style="border-color:#d13b2a; color:#b3392a;" onclick="declinePendingTransaction('${t.id}','${declineInputId}')">Tolak</button>
+        </div>
+      </div>
+    </div>
+    `;
+  }).join("");
+}
+
+async function approvePendingTransaction(id, amount) {
+  clearNotice();
+  clearError();
+  const amountStr = formatRupiah(amount);
+  if (!confirm(`Setujui & bukukan transaksi senilai ${amountStr}? Angka ini akan masuk ke buku besar.`)) return;
+  try {
+    const res = await call("review-transaction", { pending_id: id, decision: "approve" });
+    showNotice(res.message || "Transaksi disetujui dan dibukukan.");
+    refreshPendingTransactions();
+  } catch (err) {
+    handlePendingTxError(err);
+  }
+}
+
+async function declinePendingTransaction(id, inputId) {
+  clearNotice();
+  clearError();
+  const inp = document.getElementById(inputId);
+  const note = inp ? inp.value.trim() : "";
+  try {
+    const res = await call("review-transaction", { pending_id: id, decision: "decline", note });
+    showNotice(res.message || "Transaksi ditolak.");
+    refreshPendingTransactions();
+  } catch (err) {
+    handlePendingTxError(err);
+  }
+}
+
+function handlePendingTxError(err) {
+  if (err && err.status === 409) {
+    showNotice("Usulan sudah diputuskan sebelumnya.");
+    refreshPendingTransactions();
+  } else {
+    showError(String((err && err.message) || err));
+  }
+}
+
 function updateSummary(entries, pending, stats) {
   stats = stats || {};
   const total = (stats.total_entries !== undefined && stats.total_entries !== null)
@@ -682,13 +836,8 @@ function updateSummary(entries, pending, stats) {
   document.getElementById("sumUnclassified").textContent = unclassified;
   document.getElementById("sumPending").textContent = pendingCount;
 
-  const badge = document.getElementById("pendingBadge");
-  if (pendingCount > 0) {
-    badge.style.display = "inline-block";
-    badge.textContent = pendingCount;
-  } else {
-    badge.style.display = "none";
-  }
+  pendingEditsCount = pendingCount;
+  updatePendingCombinedBadge();
 }
 
 async function submitEntry() {
