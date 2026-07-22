@@ -1,1529 +1,870 @@
-<!-- retrigger2: 1784521423 -->
 <!DOCTYPE html>
 <html lang="id">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#152238" />
 <title>Honrai</title>
 <style>
-  :root {
-    --bg: #fafafa;
-    --card: #ffffff;
-    --border: #e5e5e5;
-    --text: #1a1a1a;
-    --muted: #8a8a8a;
-    --navy: #152238;
-    --lemon: #f0d030;
-    --mono: ui-monospace, "SF Mono", Menlo, monospace;
-    --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  :root{
+    --navy:#152238;
+    --lemon:#f0d030;
+    --bg:#f4f5f6;
+    --card:#ffffff;
+    --text:#1a1c1f;
+    --muted:#8a8a8a;
+    --line:#e5e5e5;
+    --line-soft:#f0f0f0;
+    --danger:#d13b2a;
+    --danger-soft:#fbe9e6;
+    --ok:#1f6f4a;
+    --pad:16px;
+    --nav-h:64px;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text)}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:15px;line-height:1.55;
+    padding-bottom:calc(var(--nav-h) + env(safe-area-inset-bottom, 0px) + 12px);
+    -webkit-text-size-adjust:100%;
+  }
+  .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+  .muted{color:var(--muted);font-size:12.5px}
+  .hidden{display:none !important}
 
-    /* elevation tokens */
-    --shadow-card: 0 1px 2px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.04);
-    --shadow-card-hover: 0 2px 4px rgba(0,0,0,0.06), 0 8px 22px rgba(0,0,0,0.07);
-    --shadow-card-strong: 0 1px 2px rgba(0,0,0,0.05), 0 6px 18px rgba(0,0,0,0.07);
-    --shadow-card-strong-hover: 0 2px 5px rgba(0,0,0,0.07), 0 10px 28px rgba(0,0,0,0.10);
+  /* ---------- LOGIN ---------- */
+  #loginView{max-width:420px;margin:0 auto;padding:56px 20px}
+  #loginView h1{font-size:30px;letter-spacing:-.02em;margin:0 0 6px}
+  #loginView h1 span{color:var(--lemon)}
 
-    /* motion */
-    --ease-soft: cubic-bezier(0.22, 0.61, 0.36, 1);
+  /* ---------- HEADER ---------- */
+  header{
+    position:sticky;top:0;z-index:40;background:var(--navy);color:#fff;
+    padding:calc(env(safe-area-inset-top,0px) + 12px) var(--pad) 12px;
+    display:flex;align-items:center;justify-content:space-between;gap:12px;
   }
-  * { box-sizing: border-box; }
-  body {
-    margin: 0;
-    background: var(--bg);
-    color: var(--text);
-    font-family: var(--sans);
-    padding: 24px 16px 80px;
-    line-height: 1.55;
-    -webkit-font-smoothing: antialiased;
+  header .brand{font-size:17px;font-weight:700;letter-spacing:-.01em}
+  header .brand span{color:var(--lemon)}
+  header .hdr-actions{display:flex;gap:8px;align-items:center}
+  .icon-btn{
+    background:rgba(255,255,255,.12);border:0;color:#fff;border-radius:8px;
+    padding:7px 11px;font-size:13px;cursor:pointer;font-family:inherit;
   }
-  .wrap { max-width: 640px; margin: 0 auto; }
+  .icon-btn:active{background:rgba(255,255,255,.25)}
 
-  /* HEADER / BRANDING */
-  .brandbar { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
-  .logo {
-    width: 34px; height: 34px; border-radius: 50%;
-    background: #000000;
-    border: 2px solid var(--navy);
-    flex-shrink: 0;
-    position: relative;
-    animation: logoIn 0.5s var(--ease-soft) both;
-  }
-  @keyframes logoIn {
-    from { opacity: 0; transform: scale(0.8); }
-    to { opacity: 1; transform: scale(1); }
-  }
-  .brand-text { display: flex; flex-direction: column; line-height: 1.15; }
-  .brand-title { font-size: 22px; font-weight: 700; color: var(--navy); letter-spacing: 0.5px; }
-  .brand-sub { font-size: 11px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; margin-top: 2px; }
-  .live-dot {
-    width: 9px; height: 9px; border-radius: 50%;
-    background: var(--lemon);
-    margin-left: auto;
-    box-shadow: 0 0 0 0 rgba(240, 208, 48, 0.5);
-    animation: pulse 2.6s ease-in-out infinite;
-    align-self: center;
-  }
-  @keyframes pulse {
-    0% { box-shadow: 0 0 0 0 rgba(240, 208, 48, 0.4); }
-    70% { box-shadow: 0 0 0 7px rgba(240, 208, 48, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(240, 208, 48, 0); }
-  }
+  .wrap{max-width:640px;margin:0 auto;padding:0 var(--pad)}
+  .pull-hint{text-align:center;font-size:11px;color:var(--muted);padding:8px 0 2px;height:26px}
 
-  /* INPUTS */
-  input, textarea {
-    width: 100%;
-    background: var(--card);
-    border: 1px solid var(--border);
-    color: var(--text);
-    padding: 10px 12px;
-    border-radius: 8px;
-    font-size: 14px;
-    font-family: var(--sans);
-    line-height: 1.5;
-    transition: border-color 0.2s var(--ease-soft), box-shadow 0.2s var(--ease-soft);
+  /* ---------- CARD ---------- */
+  .card{
+    background:var(--card);border:1px solid var(--line);border-radius:12px;
+    padding:14px;margin-bottom:10px;
   }
-  input:focus, textarea:focus {
-    outline: none;
-    border-color: var(--navy);
-    box-shadow: 0 0 0 3px rgba(21, 34, 56, 0.12);
-  }
-  input::placeholder, textarea::placeholder { color: var(--muted); }
+  .card.tight{padding:12px}
+  h2{font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin:22px 0 10px;font-weight:600}
+  h2:first-child{margin-top:14px}
 
-  /* BUTTONS */
-  button {
-    background: var(--navy);
-    color: #ffffff;
-    border: none;
-    font-weight: 600;
-    padding: 10px 16px;
-    border-radius: 8px;
-    font-size: 13px;
-    cursor: pointer;
-    font-family: var(--sans);
-    transition: filter 0.18s var(--ease-soft), background 0.18s var(--ease-soft), opacity 0.18s var(--ease-soft), transform 0.1s var(--ease-soft);
-    min-height: 40px;
+  /* ---------- BRIEF ---------- */
+  .brief{background:var(--navy);color:#fff;border:0}
+  .brief .headline{font-size:17px;font-weight:600;line-height:1.45;letter-spacing:-.01em}
+  .brief .date{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.55);margin-bottom:8px}
+  .brief .sec{margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,.15)}
+  .brief .sec-t{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--lemon);margin-bottom:4px}
+  .brief .sec-b{font-size:13.5px;color:rgba(255,255,255,.9)}
+  .warn{
+    background:rgba(240,208,48,.14);border-left:3px solid var(--lemon);
+    padding:9px 11px;border-radius:0 6px 6px 0;margin-top:10px;font-size:13.5px;
   }
-  button:hover { filter: brightness(1.15); }
-  button:active { transform: scale(0.97); }
-  button:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
-  button.secondary { background: transparent; border: 1px solid var(--border); color: var(--text); }
-  button.secondary:hover { filter: none; border-color: var(--muted); background: #f2f2f2; }
-  /* Tombol kecil: font tetap kecil, area sentuh diperbesar */
-  button.tiny { padding: 9px 14px; font-size: 11px; min-height: 40px; }
+  .act-item{font-size:13.5px;color:rgba(255,255,255,.9);padding:3px 0 3px 16px;position:relative}
+  .act-item:before{content:"→";position:absolute;left:0;color:var(--lemon)}
 
-  .row { display: flex; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
-
-  /* STATUS / MESSAGE BOXES */
-  .status { font-size: 11px; padding: 4px 8px; border: 1px solid var(--border); border-radius: 4px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); font-family: var(--mono); }
-  #debugBox { background: var(--card); border: 1px solid var(--border); color: var(--muted); padding: 10px 14px; border-radius: 8px; font-size: 11px; margin-bottom: 16px; display: none; white-space: pre-wrap; font-family: var(--mono); box-shadow: var(--shadow-card); }
-
-  /* TOAST CONTAINER */
-  #toastWrap {
-    position: fixed;
-    left: 0; right: 0;
-    bottom: calc(env(safe-area-inset-bottom, 0px) + 16px);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 8px;
-    padding: 0 12px;
-    z-index: 9999;
-    pointer-events: none;
+  /* ---------- COMPOSER ---------- */
+  textarea,input[type=text],input[type=password],input[type=number],input[type=date],select{
+    width:100%;font-family:inherit;font-size:15px;padding:12px;
+    border:1px solid var(--line);border-radius:9px;background:#fff;color:var(--text);
   }
-  .toast {
-    pointer-events: auto;
-    max-width: 560px;
-    width: 100%;
-    border-radius: 10px;
-    padding: 12px 40px 12px 14px;
-    font-size: 12px;
-    line-height: 1.5;
-    white-space: pre-wrap;
-    box-shadow: 0 6px 24px rgba(0,0,0,0.18);
-    position: relative;
-    animation: toastIn 0.28s var(--ease-soft);
-  }
-  .toast.error { background: #fff; border: 1px solid #d13b2a; color: #b3392a; font-family: var(--mono); }
-  .toast.notice { background: var(--card); border: 1px solid var(--navy); border-left: 3px solid var(--navy); color: var(--text); }
-  .toast .toast-close {
-    position: absolute;
-    top: 6px; right: 8px;
-    background: transparent;
-    border: none;
-    color: inherit;
-    font-size: 16px;
-    line-height: 1;
-    cursor: pointer;
-    padding: 4px 6px;
-    min-height: 0;
-    font-weight: 700;
-    opacity: 0.7;
-  }
-  .toast .toast-close:hover { filter: none; opacity: 1; background: transparent; }
-  @keyframes toastIn {
-    from { opacity: 0; transform: translateY(16px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
+  textarea{resize:none;overflow:hidden;min-height:52px;line-height:1.5}
+  textarea:focus,input:focus,select:focus{outline:2px solid var(--navy);outline-offset:-1px;border-color:var(--navy)}
 
-  section { margin-bottom: 32px; }
-  section h2 { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin: 0 0 16px; font-weight: 600; }
-
-  .card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 16px;
-    margin-bottom: 12px;
-    line-height: 1.55;
-    box-shadow: var(--shadow-card);
-    transition: box-shadow 0.2s var(--ease-soft), transform 0.2s var(--ease-soft);
+  button{
+    font-family:inherit;font-size:14.5px;font-weight:600;padding:11px 16px;
+    border-radius:9px;border:1.5px solid var(--navy);background:var(--navy);color:#fff;cursor:pointer;
   }
-  .card:hover { box-shadow: var(--shadow-card-hover); }
-  .card.flat { border: 1px solid var(--border); background: #fdfdfd; }
-  .card.pending {
-    border-left: 3px solid var(--navy);
-    box-shadow: var(--shadow-card-strong);
+  button:active{opacity:.75}
+  button:disabled{opacity:.4;cursor:not-allowed}
+  button.ghost{background:transparent;color:var(--navy)}
+  button.danger{background:var(--danger);border-color:var(--danger)}
+  button.danger.ghost{background:transparent;color:var(--danger)}
+  button.tiny{font-size:12.5px;padding:7px 11px;border-radius:7px}
+  button.full{width:100%}
+  .row{display:flex;gap:8px;align-items:flex-start}
+  .row>textarea{flex:1}
+  .btn-row{display:flex;gap:8px;margin-top:9px;flex-wrap:wrap}
+  .btn-row>button{flex:1;min-width:118px}
+
+  /* ---------- PROPOSAL ---------- */
+  .proposal{border:1.5px solid var(--navy);border-radius:12px;padding:14px;margin-top:10px;background:#fff}
+  .intent{
+    display:inline-block;font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;
+    background:var(--navy);color:#fff;padding:3px 9px;border-radius:5px;
   }
-  .card.pending:hover { box-shadow: var(--shadow-card-strong-hover); }
+  .intent.kode{background:var(--danger)}
+  .intent.pertanyaan{background:var(--ok)}
+  .step{font-size:13.5px;padding:4px 0 4px 18px;position:relative}
+  .step:before{content:"";position:absolute;left:5px;top:12px;width:5px;height:5px;border-radius:50%;background:var(--navy)}
+  .risk{background:var(--danger-soft);border-left:3px solid var(--danger);padding:9px 11px;border-radius:0 6px 6px 0;font-size:13px;margin-top:10px}
 
-  .muted { color: var(--muted); font-size: 12px; }
-  .mono { font-family: var(--mono); }
-  a { color: var(--navy); }
-
-  .secretbar { display:flex; justify-content:flex-end; margin-bottom: 16px; }
-
-  /* TABS */
-  .tabs {
-    display: flex;
-    gap: 4px;
-    border-bottom: 1px solid var(--border);
-    margin-bottom: 24px;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
+  /* ---------- CHIPS ---------- */
+  .chips{display:flex;gap:7px;overflow-x:auto;padding:2px 0 10px;-webkit-overflow-scrolling:touch}
+  .chips::-webkit-scrollbar{display:none}
+  .chip{
+    flex:none;font-size:13px;font-weight:600;padding:7px 13px;border-radius:999px;
+    border:1px solid var(--line);background:#fff;color:var(--muted);cursor:pointer;
   }
-  .tabs::-webkit-scrollbar { display: none; height: 0; }
-  .tab {
-    background: transparent;
-    border: none;
-    border-bottom: 2px solid transparent;
-    color: var(--muted);
-    font-family: var(--sans);
-    font-weight: 600;
-    font-size: 13px;
-    padding: 10px 14px;
-    cursor: pointer;
-    border-radius: 0;
-    transition: color 0.2s var(--ease-soft), border-color 0.2s var(--ease-soft);
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    white-space: nowrap;
-    flex-shrink: 0;
-    min-height: 40px;
-  }
-  .tab:hover { filter: none; color: var(--text); background: transparent; transform: none; }
-  .tab:active { transform: none; }
-  .tab.active { color: var(--navy); border-bottom-color: var(--navy); }
+  .chip.on{background:var(--navy);border-color:var(--navy);color:#fff}
+  .chip .n{opacity:.65;margin-left:5px;font-size:11.5px}
 
-  /* BADGES / COUNTERS */
-  .badge {
-    background: var(--lemon);
-    color: var(--navy);
-    font-family: var(--mono);
-    font-size: 11px;
-    font-weight: 700;
-    padding: 1px 7px;
-    border-radius: 20px;
-    line-height: 1.6;
-    display: inline-block;
+  /* ---------- INBOX ITEM ---------- */
+  .item{background:#fff;border:1px solid var(--line);border-left:3px solid var(--line);border-radius:10px;padding:13px;margin-bottom:9px}
+  .item.p1{border-left-color:var(--danger)}
+  .item.p2{border-left-color:var(--navy)}
+  .item.p3{border-left-color:var(--lemon)}
+  .item.p4{border-left-color:var(--line)}
+  .item .kind{font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);font-weight:700}
+  .item .title{font-size:14.5px;font-weight:600;margin-top:3px;line-height:1.45;word-break:break-word}
+  .item .sub{font-size:12.5px;color:var(--muted);margin-top:4px;word-break:break-word}
+  .amount{font-size:19px;font-weight:700;color:var(--navy);margin-top:7px}
+  .jrow{display:flex;justify-content:space-between;gap:10px;font-size:12.5px;padding:3px 0;border-bottom:1px solid var(--line-soft)}
+  .jrow:last-child{border-bottom:0}
+
+  /* ---------- MEMORY ---------- */
+  .fact{background:#fff;border:1px solid var(--line);border-radius:10px;padding:13px;margin-bottom:9px}
+  .fact .c{font-size:14.5px;line-height:1.5}
+  .meta{font-size:11.5px;color:var(--muted);margin-top:7px;display:flex;flex-wrap:wrap;gap:9px}
+  .src{background:var(--bg);border-radius:7px;padding:9px;margin-top:9px;font-size:12.5px;color:var(--muted)}
+  .src>div{padding:4px 0;border-bottom:1px solid var(--line)}
+  .src>div:last-child{border-bottom:0}
+  .bar{height:3px;background:var(--line-soft);border-radius:2px;overflow:hidden;margin-top:7px}
+  .bar>i{display:block;height:100%;background:var(--lemon)}
+
+  /* ---------- NAV ---------- */
+  nav{
+    position:fixed;left:0;right:0;bottom:0;z-index:50;background:#fff;
+    border-top:1px solid var(--line);display:flex;
+    padding-bottom:env(safe-area-inset-bottom,0px);
+  }
+  nav button{
+    flex:1;background:none;border:0;color:var(--muted);font-size:11px;font-weight:600;
+    padding:9px 2px 10px;border-radius:0;display:flex;flex-direction:column;align-items:center;gap:3px;
+  }
+  nav button .ic{font-size:19px;line-height:1}
+  nav button.on{color:var(--navy)}
+  nav button.on .ic{transform:translateY(-1px)}
+  .dot{
+    position:absolute;transform:translate(14px,-4px);background:var(--danger);color:#fff;
+    font-size:10px;font-weight:700;min-width:17px;height:17px;border-radius:9px;
+    display:flex;align-items:center;justify-content:center;padding:0 4px;
   }
 
-  /* SUMMARY (Beranda) */
-  .summary-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 12px;
-    margin-bottom: 32px;
+  /* ---------- MISC ---------- */
+  .toast{
+    position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--nav-h) + 18px);
+    background:var(--navy);color:#fff;padding:11px 17px;border-radius:9px;font-size:13.5px;
+    z-index:90;max-width:88%;box-shadow:0 6px 22px rgba(0,0,0,.2);
   }
-  @media (max-width: 480px) {
-    .summary-grid { grid-template-columns: 1fr; }
-  }
-  .summary-card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 20px 16px;
-    box-shadow: var(--shadow-card);
-    transition: box-shadow 0.2s var(--ease-soft), transform 0.2s var(--ease-soft);
-  }
-  .summary-card:hover { box-shadow: var(--shadow-card-hover); }
-  .summary-num { font-family: var(--mono); font-size: 34px; font-weight: 700; color: var(--navy); line-height: 1; letter-spacing: -0.5px; }
-  .summary-num.attn { color: var(--text); }
-  .summary-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 1.5px; margin-top: 12px; }
-
-  /* TAB PANELS + FADE */
-  .panel { display: none; }
-  .panel.active { display: block; animation: fadeIn 0.28s var(--ease-soft); }
-  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-  /* MOTION MASUK: card fade + rise, stagger */
-  .panel.active .card,
-  .panel.active .summary-card {
-    animation: cardRise 0.28s var(--ease-soft) both;
-  }
-  @keyframes cardRise {
-    from { opacity: 0; transform: translateY(8px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-  .panel.active .card:nth-child(1),
-  .panel.active .summary-card:nth-child(1) { animation-delay: 0.02s; }
-  .panel.active .card:nth-child(2),
-  .panel.active .summary-card:nth-child(2) { animation-delay: 0.06s; }
-  .panel.active .card:nth-child(3),
-  .panel.active .summary-card:nth-child(3) { animation-delay: 0.10s; }
-  .panel.active .card:nth-child(4) { animation-delay: 0.14s; }
-  .panel.active .card:nth-child(5) { animation-delay: 0.18s; }
-  .panel.active .card:nth-child(6) { animation-delay: 0.22s; }
-  .panel.active .card:nth-child(n+7) { animation-delay: 0.26s; }
-
-  @media (prefers-reduced-motion: reduce) {
-    .logo, .panel.active, .panel.active .card, .panel.active .summary-card, .live-dot, .toast { animation: none !important; }
-    button:active { transform: none; }
-  }
-
-  /* SKELETON LOADING */
-  .skeleton-card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 16px;
-    margin-bottom: 12px;
-    box-shadow: var(--shadow-card);
-  }
-  .sk-line {
-    height: 12px;
-    border-radius: 6px;
-    background: linear-gradient(90deg, #eeeeee 25%, #f6f6f6 37%, #eeeeee 63%);
-    background-size: 400% 100%;
-    animation: shimmer 1.4s ease infinite;
-    margin-bottom: 10px;
-  }
-  .sk-line:last-child { margin-bottom: 0; }
-  .sk-line.w40 { width: 40%; }
-  .sk-line.w60 { width: 60%; }
-  .sk-line.w80 { width: 80%; }
-  .sk-line.short { height: 10px; }
-  @keyframes shimmer {
-    0% { background-position: 100% 50%; }
-    100% { background-position: 0 50%; }
-  }
-
-  /* LOGIN */
-  #loginView { max-width: 420px; margin: 0 auto; }
-  #loginView .login-head { text-align: center; margin-bottom: 28px; }
-  #loginView .brandbar { justify-content: center; }
-  #loginView .live-dot { display: none; }
+  .toast.err{background:var(--danger)}
+  .sk{background:linear-gradient(90deg,#eee 25%,#f6f6f6 50%,#eee 75%);background-size:200% 100%;animation:sh 1.3s infinite;border-radius:7px;height:13px;margin-bottom:8px}
+  @keyframes sh{0%{background-position:200% 0}100%{background-position:-200% 0}}
+  .empty{text-align:center;color:var(--muted);font-size:13.5px;padding:26px 12px}
+  .seg{display:flex;gap:6px;margin-bottom:12px}
+  .seg button{flex:1;font-size:12.5px;padding:8px;border-radius:8px;background:#fff;color:var(--muted);border:1px solid var(--line)}
+  .seg button.on{background:var(--navy);color:#fff;border-color:var(--navy)}
 </style>
 </head>
 <body>
-<div class="wrap">
 
-  <!-- LOGIN VIEW -->
-  <div id="loginView">
-    <div class="login-head">
-      <div class="brandbar">
-        <div class="logo"></div>
-        <div class="brand-text">
-          <span class="brand-title">Honrai</span>
-          <span class="brand-sub">Operating System</span>
+<!-- ================= LOGIN ================= -->
+<div id="loginView">
+  <h1>Hon<span>rai</span></h1>
+  <p class="muted" style="margin:0 0 22px">Masukkan kunci aplikasi untuk melanjutkan.</p>
+  <input type="password" id="secretInput" placeholder="Kunci aplikasi" autocomplete="current-password" />
+  <div style="height:10px"></div>
+  <button class="full" onclick="connect()">Masuk</button>
+  <p id="loginMsg" class="muted" style="margin-top:14px"></p>
+</div>
+
+<!-- ================= MAIN ================= -->
+<div id="mainView" class="hidden">
+  <header>
+    <div class="brand">Hon<span>rai</span></div>
+    <div class="hdr-actions">
+      <button class="icon-btn" onclick="refreshCurrent()">&#8635;</button>
+      <button class="icon-btn" onclick="logout()">Keluar</button>
+    </div>
+  </header>
+
+  <div class="pull-hint" id="pullHint"></div>
+  <div class="wrap">
+
+    <!-- ---------- HUB ---------- -->
+    <div id="viewHub">
+      <div id="briefBox"></div>
+
+      <h2>Tulis sesuatu</h2>
+      <div class="card">
+        <textarea id="composer" rows="1" placeholder="Catatan, pertanyaan, atau permintaan perubahan aplikasi..." oninput="autoGrow(this)"></textarea>
+        <div class="btn-row">
+          <button class="full" onclick="planFromComposer()" id="btnPlan">Susun rencana</button>
         </div>
-      </div>
-    </div>
-    <p class="muted">Masukkan APP_SECRET buat sesi ini. Bisa disimpan di browser ini biar nggak ketik ulang.</p>
-    <div class="row">
-      <input type="password" id="secretInput" placeholder="APP_SECRET" />
-      <button onclick="connect()">Hubungkan</button>
-    </div>
-    <label class="muted" style="display:block; margin-bottom:12px;">
-      <input type="checkbox" id="rememberSecret" checked style="width:auto; margin-right:6px;" />
-      Ingat secret di browser ini
-    </label>
-    <div id="debugBox"></div>
-  </div>
-
-  <!-- MAIN VIEW -->
-  <div id="mainView" style="display:none;">
-
-    <div class="brandbar">
-      <div class="logo"></div>
-      <div class="brand-text">
-        <span class="brand-title">Honrai</span>
-        <span class="brand-sub">Operating System</span>
-      </div>
-      <div class="live-dot" title="Sistem terkoneksi"></div>
-    </div>
-
-    <div class="secretbar">
-      <button class="secondary tiny" onclick="changeSecret()">Ganti Secret</button>
-    </div>
-
-    <!-- TABS -->
-    <div class="tabs">
-      <button class="tab active" id="tabBtnBeranda" onclick="switchTab('beranda')">Beranda</button>
-      <button class="tab" id="tabBtnMemori" onclick="switchTab('memori')">Memori</button>
-      <button class="tab" id="tabBtnEntries" onclick="switchTab('entries')">Entries</button>
-      <button class="tab" id="tabBtnPending" onclick="switchTab('pending')">
-        Keputusan <span id="pendingBadge" class="badge" style="display:none;">0</span>
-      </button>
-      <button class="tab" id="tabBtnAkuntansi" onclick="switchTab('akuntansi')">
-        Akuntansi <span id="akuntansiBadge" class="badge" style="display:none;">0</span>
-      </button>
-      <button class="tab" id="tabBtnLaporan" onclick="switchTab('laporan')">
-        Laporan <span id="laporanBadge" class="badge" style="display:none;">0</span>
-      </button>
-    </div>
-
-    <!-- PANEL: BERANDA -->
-    <div class="panel active" id="panelBeranda">
-      <div class="summary-grid">
-        <div class="summary-card">
-          <div class="summary-num" id="sumTotal">0</div>
-          <div class="summary-label">Total Entries</div>
-        </div>
-        <div class="summary-card">
-          <div class="summary-num attn" id="sumUnclassified">0</div>
-          <div class="summary-label">Belum Diklasifikasi</div>
-        </div>
-        <div class="summary-card">
-          <div class="summary-num attn" id="sumPending">0</div>
-          <div class="summary-label">PR Menunggu</div>
-        </div>
+        <p class="muted" style="margin:8px 0 0">Tidak ada yang dijalankan sebelum Anda menyetujui.</p>
+        <div id="proposalBox"></div>
       </div>
 
-      <section>
-        <h2>Catatan baru</h2>
-        <div class="row">
-          <input id="composeInput" placeholder="Tulis sesuatu..." />
-          <button id="btnKirim" onclick="submitEntry()">Kirim</button>
-          <button id="btnInstruction" class="secondary" onclick="submitInstruction()">Jadikan Instruksi AI</button>
-        </div>
-        <div class="row">
-          <button class="secondary tiny" onclick="planWageTomorrow()">&#128181; Susun Rencana Upah Kerja Besok</button>
-        </div>
-      </section>
-
-      <section>
-        <h2>Tanya Honrai</h2>
-        <div class="row">
-          <textarea id="askInput" placeholder="Tanya sesuatu tentang catatanmu..." rows="2"></textarea>
-          <button id="btnTanya" onclick="askHonrai()">Tanya</button>
-        </div>
-        <div id="askAnswerCard"></div>
-      </section>
-
-      <button class="secondary" onclick="refresh()">&#8635; Refresh</button>
+      <h2>Butuh perhatian</h2>
+      <div class="chips" id="inboxChips"></div>
+      <div id="inboxList"></div>
     </div>
 
-    <!-- PANEL: MEMORI -->
-    <div class="panel" id="panelMemori">
-      <div id="memorySummaryLine" class="muted" style="margin-bottom:16px;"></div>
-      <section>
-        <h2>Yang Kuketahui Tentangmu</h2>
-        <div id="memoryFactsList"></div>
-      </section>
-      <section>
-        <h2>Relasi</h2>
-        <div id="memoryRelationsList"></div>
-      </section>
-      <section>
-        <h2>Episode</h2>
-        <div id="memoryEpisodesList"></div>
-      </section>
-      <button class="secondary" onclick="refreshMemori()">&#8635; Refresh</button>
+    <!-- ---------- MEMORI ---------- -->
+    <div id="viewMemori" class="hidden">
+      <h2>Yang saya ketahui tentang Anda</h2>
+      <p class="muted" id="memSummary" style="margin:-4px 0 12px"></p>
+      <div id="memFacts"></div>
+      <h2>Relasi</h2>
+      <div id="memRelations"></div>
+      <h2>Episode</h2>
+      <div id="memEpisodes"></div>
     </div>
 
-    <!-- PANEL: ENTRIES -->
-    <div class="panel" id="panelEntries">
-      <section>
-        <h2>Log entries</h2>
-        <div id="entriesList"></div>
-      </section>
-      <button class="secondary" onclick="refresh()">&#8635; Refresh</button>
+    <!-- ---------- CATATAN ---------- -->
+    <div id="viewCatatan" class="hidden">
+      <h2>Catatan terakhir</h2>
+      <div id="entryList"></div>
     </div>
 
-    <!-- PANEL: PENDING -->
-    <div class="panel" id="panelPending">
-      <section>
-        <h2>Jurnal Menunggu Persetujuan</h2>
-        <div id="pendingTransactionsList"></div>
-      </section>
-      <section>
-        <h2>Menunggu keputusan</h2>
-        <div id="pendingList"></div>
-      </section>
-      <button class="secondary" onclick="refresh()">&#8635; Refresh</button>
-    </div>
-
-    <!-- PANEL: AKUNTANSI -->
-    <div class="panel" id="panelAkuntansi">
-      <section>
-        <h2>Perlu klarifikasi</h2>
-        <div id="clarificationsList"></div>
-      </section>
-      <section>
-        <h2>Usulan akun baru</h2>
-        <div id="accountProposalsList"></div>
-      </section>
-      <button class="secondary" onclick="refresh()">&#8635; Refresh</button>
-    </div>
-
-    <!-- PANEL: LAPORAN -->
-    <div class="panel" id="panelLaporan">
-      <div id="laporanFailures"></div>
-      <section>
-        <h2>Posisi Kas</h2>
-        <div id="laporanCashPosition"></div>
-      </section>
-      <section>
-        <h2>Bulan Ini</h2>
-        <div id="laporanPeriodSummary"></div>
-      </section>
-      <section>
-        <h2>Saldo per Akun</h2>
-        <div id="laporanAccountBalances"></div>
-      </section>
-      <section>
-        <h2>Stok Barang</h2>
-        <div id="laporanInventory"></div>
-      </section>
-      <section>
-        <h2>Transaksi Terakhir</h2>
-        <div id="laporanTransactions"></div>
-      </section>
-      <button class="secondary" onclick="refreshLaporan()">&#8635; Refresh</button>
+    <!-- ---------- KEUANGAN ---------- -->
+    <div id="viewKeuangan" class="hidden">
+      <h2>Posisi kas</h2>
+      <div id="finCash"></div>
+      <h2>Ringkasan periode</h2>
+      <div class="seg" id="finPeriodSeg"></div>
+      <div id="finSummary"></div>
+      <h2>Saldo akun</h2>
+      <div id="finBalances"></div>
+      <h2>Persediaan</h2>
+      <div id="finInventory"></div>
+      <h2>Transaksi</h2>
+      <div id="finTx"></div>
     </div>
 
   </div>
 </div>
 
-<!-- TOAST CONTAINER -->
-<div id="toastWrap"></div>
+<nav id="navBar" class="hidden">
+  <button id="navHub" class="on" onclick="go('Hub')"><span class="ic">&#9632;</span>Hub<span id="navDot" class="dot hidden">0</span></button>
+  <button id="navMemori" onclick="go('Memori')"><span class="ic">&#9679;</span>Memori</button>
+  <button id="navCatatan" onclick="go('Catatan')"><span class="ic">&#9634;</span>Catatan</button>
+  <button id="navKeuangan" onclick="go('Keuangan')"><span class="ic">&#9650;</span>Keuangan</button>
+</nav>
 
 <script>
+/* =========================================================
+   Honrai — hub satu layar.
+   Ditulis ulang 22/7/2026 menggantikan versi yang tumbuh dari tambalan.
+   Prinsip:
+   - SATU kotak input. Sistem yang menentukan maksud, lalu MENGUSULKAN.
+     Tidak ada yang dieksekusi tanpa persetujuan pemilik.
+   - SATU pintu untuk semua yang butuh perhatian (get-inbox), disaring chip.
+   - Setiap layar memuat ulang sendiri saat dibuka; refresh juga tersedia
+     di header (bukan lagi satu tombol di dasar satu panel).
+   ========================================================= */
+
 const BASE_URL = "https://ppomgoflwpsyatmaynne.supabase.co/functions/v1";
 const ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBwb21nb2Zsd3BzeWF0bWF5bm5lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ0NzIxMzksImV4cCI6MjEwMDA0ODEzOX0.H2fO03O2-_QrjFbVaTcEN2KWHJ79I_sMbmKjdZ1Itsg";
 const SECRET_KEY = "aios_app_secret";
 let SECRET = "";
 
-let currentErrorToast = null;
-let pendingEditsCount = 0;
-let pendingTxCount = 0;
+let currentView = "Hub";
+let inboxItems = [];
+let inboxFilter = "semua";
+let currentProposal = null;
+let finData = null;
+let finPeriod = "bulan";
 
-function skeleton(n) {
-  n = n || 3;
-  let out = "";
-  for (let i = 0; i < n; i++) {
-    out += '<div class="skeleton-card">'
-      + '<div class="sk-line w80"></div>'
-      + '<div class="sk-line short w40"></div>'
-      + '<div class="sk-line short w60"></div>'
-      + '</div>';
-  }
-  return out;
+/* ---------- util ---------- */
+function $(id){ return document.getElementById(id); }
+function esc(s){
+  return String(s == null ? "" : s)
+    .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;").replace(/'/g,"&#39;");
 }
-
-function switchTab(name) {
-  const map = {
-    beranda: ["tabBtnBeranda", "panelBeranda"],
-    memori: ["tabBtnMemori", "panelMemori"],
-    entries: ["tabBtnEntries", "panelEntries"],
-    pending: ["tabBtnPending", "panelPending"],
-    akuntansi: ["tabBtnAkuntansi", "panelAkuntansi"],
-    laporan: ["tabBtnLaporan", "panelLaporan"],
-  };
-  Object.values(map).forEach(([btn, panel]) => {
-    document.getElementById(btn).classList.remove("active");
-    document.getElementById(panel).classList.remove("active");
-  });
-  const [btn, panel] = map[name];
-  document.getElementById(btn).classList.add("active");
-  document.getElementById(panel).classList.add("active");
-  if (name === "laporan") refreshLaporan();
-  if (name === "pending") refreshPendingTransactions();
-  if (name === "memori") refreshMemori();
+function rupiah(n){
+  const v = Number(n || 0);
+  return "Rp " + Math.round(v).toLocaleString("id-ID");
 }
-
-function showError(msg) {
-  // error toast tetap sampai ditutup manual
-  const wrap = document.getElementById("toastWrap");
-  if (!wrap) return;
-  if (currentErrorToast && currentErrorToast.parentNode) {
-    currentErrorToast.parentNode.removeChild(currentErrorToast);
-  }
-  const toast = document.createElement("div");
-  toast.className = "toast error";
-  const span = document.createElement("span");
-  span.textContent = msg;
-  const close = document.createElement("button");
-  close.className = "toast-close";
-  close.setAttribute("aria-label", "Tutup");
-  close.textContent = "\u00d7";
-  close.onclick = () => { if (toast.parentNode) toast.parentNode.removeChild(toast); if (currentErrorToast === toast) currentErrorToast = null; };
-  toast.appendChild(span);
-  toast.appendChild(close);
-  wrap.appendChild(toast);
-  currentErrorToast = toast;
+function skel(n){
+  let o = "";
+  for (let i = 0; i < (n || 3); i++) o += '<div class="card"><div class="sk" style="width:70%"></div><div class="sk" style="width:45%"></div></div>';
+  return o;
 }
-function clearError() {
-  if (currentErrorToast && currentErrorToast.parentNode) {
-    currentErrorToast.parentNode.removeChild(currentErrorToast);
-  }
-  currentErrorToast = null;
+function autoGrow(el){
+  el.style.height = "auto";
+  el.style.height = Math.min(el.scrollHeight, 260) + "px";
 }
-function debug(msg) {
-  const box = document.getElementById("debugBox");
-  if (!box) return;
-  box.style.display = "block";
-  box.textContent = msg;
+let toastTimer = null;
+function toast(msg, isErr){
+  const old = document.querySelector(".toast");
+  if (old) old.remove();
+  const d = document.createElement("div");
+  d.className = "toast" + (isErr ? " err" : "");
+  d.textContent = msg;
+  document.body.appendChild(d);
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function(){ d.remove(); }, isErr ? 6000 : 3200);
 }
-function showNotice(msg) {
-  // notice toast auto-hilang setelah 5 detik
-  const wrap = document.getElementById("toastWrap");
-  if (!wrap) return;
-  const toast = document.createElement("div");
-  toast.className = "toast notice";
-  toast.textContent = msg;
-  wrap.appendChild(toast);
-  setTimeout(() => {
-    if (toast.parentNode) toast.parentNode.removeChild(toast);
-  }, 5000);
-}
-function clearNotice() {
-  // notice bersifat sementara; tidak perlu aksi khusus
+function timeAgo(d){
+  if (!d) return "";
+  const t = new Date(d).getTime();
+  if (isNaN(t)) return "";
+  const s = Math.floor((Date.now() - t) / 1000);
+  if (s < 60) return "baru saja";
+  if (s < 3600) return Math.floor(s / 60) + " menit lalu";
+  if (s < 86400) return Math.floor(s / 3600) + " jam lalu";
+  if (s < 2592000) return Math.floor(s / 86400) + " hari lalu";
+  return new Date(d).toLocaleDateString("id-ID");
 }
 
-async function call(fn, payload) {
-  const res = await fetch(`${BASE_URL}/${fn}`, {
+/* ---------- api ---------- */
+async function call(fn, payload){
+  const res = await fetch(BASE_URL + "/" + fn, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "Authorization": `Bearer ${ANON_KEY}`,
-      "x-app-secret": SECRET,
+      "Authorization": "Bearer " + ANON_KEY,
+      "x-app-secret": SECRET
     },
-    body: JSON.stringify(payload || {}),
+    body: JSON.stringify(payload || {})
   });
-  const data = await res.json().catch(() => ({}));
+  const data = await res.json().catch(function(){ return {}; });
   if (!res.ok) {
-    const err = new Error(data.error || (fn + " gagal (" + res.status + ")"));
-    err.status = res.status;
-    throw err;
+    const e = new Error(data.error || (fn + " gagal (" + res.status + ")"));
+    e.status = res.status;
+    e.detail = data.detail;
+    throw e;
   }
   return data;
 }
+function fail(err){ toast(String((err && err.message) || err), true); }
 
-async function connect() {
-  SECRET = document.getElementById("secretInput").value;
-  clearError();
-  debug("Menghubungi " + BASE_URL + "/list-entries ...");
+/* ---------- auth ---------- */
+async function connect(){
+  SECRET = $("secretInput").value.trim();
+  if (!SECRET) { $("loginMsg").textContent = "Kunci belum diisi."; return; }
+  $("loginMsg").textContent = "Menghubungkan...";
   try {
     await call("list-entries", { limit: 1 });
-    const remember = document.getElementById("rememberSecret");
-    if (!remember || remember.checked) {
-      try { localStorage.setItem(SECRET_KEY, SECRET); } catch (e) {}
-    }
-    document.getElementById("loginView").style.display = "none";
-    document.getElementById("mainView").style.display = "block";
-    refresh();
+    try { localStorage.setItem(SECRET_KEY, SECRET); } catch (e) {}
+    enterApp();
   } catch (err) {
-    showError("Gagal connect: " + (err.message || err) + "\\n\\nKalau pesannya 'Failed to fetch', berarti koneksi ke Supabase-nya sendiri yang gagal (jaringan/CORS/domain). Kalau pesannya 'Unauthorized', berarti APP_SECRET salah.");
-    debug("Error detail: " + (err.stack || err));
+    $("loginMsg").textContent = "Gagal: " + ((err && err.message) || err);
   }
 }
-
-function changeSecret() {
+function logout(){
   try { localStorage.removeItem(SECRET_KEY); } catch (e) {}
   SECRET = "";
-  clearError();
-  clearNotice();
-  document.getElementById("mainView").style.display = "none";
-  document.getElementById("loginView").style.display = "block";
-  const inp = document.getElementById("secretInput");
-  if (inp) { inp.value = ""; inp.focus(); }
+  $("mainView").classList.add("hidden");
+  $("navBar").classList.add("hidden");
+  $("loginView").classList.remove("hidden");
+  $("loginMsg").textContent = "";
+}
+function enterApp(){
+  $("loginView").classList.add("hidden");
+  $("mainView").classList.remove("hidden");
+  $("navBar").classList.remove("hidden");
+  go("Hub");
 }
 
-async function refresh() {
-  clearError();
-  const entriesEl = document.getElementById("entriesList");
-  const pendingEl = document.getElementById("pendingList");
-  if (entriesEl) entriesEl.innerHTML = skeleton(3);
-  if (pendingEl) pendingEl.innerHTML = skeleton(2);
+/* ---------- navigasi ---------- */
+function go(name){
+  currentView = name;
+  ["Hub","Memori","Catatan","Keuangan"].forEach(function(v){
+    const view = $("view" + v), btn = $("nav" + v);
+    if (view) view.classList.toggle("hidden", v !== name);
+    if (btn) btn.classList.toggle("on", v === name);
+  });
+  window.scrollTo(0, 0);
+  refreshCurrent();
+}
+function refreshCurrent(){
+  if (currentView === "Hub") loadHub();
+  else if (currentView === "Memori") loadMemori();
+  else if (currentView === "Catatan") loadCatatan();
+  else if (currentView === "Keuangan") loadKeuangan();
+}
+
+/* ---------- HUB ---------- */
+async function loadHub(){
+  loadBrief();
+  loadInbox();
+}
+
+async function loadBrief(){
+  const el = $("briefBox");
+  el.innerHTML = '<div class="card brief"><div class="sk" style="width:60%;background:#2a3a55"></div><div class="sk" style="width:85%;background:#2a3a55"></div></div>';
   try {
-    const e = await call("list-entries", { limit: 20 });
-    const p = await call("list-pending-edits", {});
-    const entries = e.entries || [];
-    const stats = e.stats || {};
-    const pending = p.pending_edits || [];
-    renderEntries(entries);
-    renderPending(pending);
-    updateSummary(entries, pending, stats);
+    const r = await call("daily-brief", {});
+    const b = r.brief || {};
+    let h = '<div class="card brief">';
+    h += '<div class="date">' + esc(r.date || "") + "</div>";
+    h += '<div class="headline">' + esc(b.headline || "Tidak ada ringkasan.") + "</div>";
+    (b.warnings || []).forEach(function(w){ h += '<div class="warn">' + esc(w) + "</div>"; });
+    (b.sections || []).forEach(function(s){
+      h += '<div class="sec"><div class="sec-t">' + esc(s.title || "") + '</div><div class="sec-b">' + esc(s.body || "") + "</div></div>";
+    });
+    if ((b.actions || []).length) {
+      h += '<div class="sec"><div class="sec-t">Disarankan</div>';
+      (b.actions || []).forEach(function(a){ h += '<div class="act-item">' + esc(a) + "</div>"; });
+      h += "</div>";
+    }
+    h += "</div>";
+    el.innerHTML = h;
   } catch (err) {
-    showError(String(err.message || err));
+    el.innerHTML = '<div class="card"><div class="muted">Ringkasan harian tidak tersedia: ' + esc((err && err.message) || err) + "</div></div>";
   }
-  refreshAkuntansi();
-  refreshPendingTransactions();
 }
 
-async function refreshAkuntansi() {
-  const clarEl = document.getElementById("clarificationsList");
-  const propEl = document.getElementById("accountProposalsList");
-  if (clarEl) clarEl.innerHTML = skeleton(2);
-  if (propEl) propEl.innerHTML = skeleton(2);
+async function loadInbox(){
+  $("inboxList").innerHTML = skel(2);
   try {
-    const c = await call("list-clarifications", {});
-    const clarifications = c.clarifications || [];
-    renderClarifications(clarifications);
-
-    const a = await call("list-account-proposals", {});
-    const proposals = a.account_proposals || a.proposals || [];
-    renderAccountProposals(proposals);
-
-    updateAkuntansiBadge(clarifications.length + proposals.length);
+    const r = await call("get-inbox", { limit: 100 });
+    inboxItems = r.items || [];
+    renderChips(r.counts_by_kind || {});
+    renderInbox();
+    const n = r.needs_decision || 0;
+    const dot = $("navDot");
+    if (n > 0) { dot.textContent = n; dot.classList.remove("hidden"); }
+    else dot.classList.add("hidden");
   } catch (err) {
-    showError(String(err.message || err));
+    $("inboxList").innerHTML = '<div class="empty">Gagal memuat: ' + esc((err && err.message) || err) + "</div>";
   }
 }
 
-function updateAkuntansiBadge(count) {
-  const badge = document.getElementById("akuntansiBadge");
-  if (!badge) return;
-  if (count > 0) {
-    badge.style.display = "inline-block";
-    badge.textContent = count;
-  } else {
-    badge.style.display = "none";
+const GROUPS = {
+  semua: null,
+  uang: ["jurnal","gagal-akunting","akun"],
+  keputusan: ["usulan-tindakan","klarifikasi"],
+  sistem: ["kode","insiden"]
+};
+function renderChips(counts){
+  const labels = { semua:"Semua", uang:"Uang", keputusan:"Keputusan", sistem:"Sistem" };
+  let h = "";
+  Object.keys(GROUPS).forEach(function(g){
+    let n = 0;
+    if (g === "semua") n = inboxItems.length;
+    else GROUPS[g].forEach(function(k){ n += (counts[k] || 0); });
+    h += '<button class="chip' + (inboxFilter === g ? " on" : "") + '" onclick="setFilter(\'' + g + '\')">' +
+         labels[g] + '<span class="n">' + n + "</span></button>";
+  });
+  $("inboxChips").innerHTML = h;
+}
+function setFilter(g){
+  inboxFilter = g;
+  renderChips({});
+  const counts = {};
+  inboxItems.forEach(function(i){ counts[i.kind] = (counts[i.kind] || 0) + 1; });
+  renderChips(counts);
+  renderInbox();
+}
+
+function renderInbox(){
+  const el = $("inboxList");
+  const allow = GROUPS[inboxFilter];
+  const list = allow ? inboxItems.filter(function(i){ return allow.indexOf(i.kind) >= 0; }) : inboxItems;
+  if (!list.length) { el.innerHTML = '<div class="empty">Tidak ada yang menunggu keputusan Anda.</div>'; return; }
+  el.innerHTML = list.map(renderInboxItem).join("");
+}
+
+function renderInboxItem(i){
+  const d = i.data || {};
+  let body = "";
+  let actions = "";
+  const id = esc(i.id);
+
+  if (i.kind === "jurnal") {
+    const lines = (d.payload && d.payload.lines) || [];
+    body += '<div class="amount">' + rupiah(i.amount) + "</div>";
+    if (lines.length) {
+      body += '<div style="margin-top:9px">' + lines.map(function(l){
+        const isD = Number(l.debit) > 0;
+        return '<div class="jrow"><span>' + esc(l.account_name || l.account_code) + '</span><span class="mono">' +
+               (isD ? "D " + rupiah(l.debit) : "K " + rupiah(l.credit)) + "</span></div>";
+      }).join("") + "</div>";
+    }
+    actions = '<button class="tiny" onclick="txDecide(\'' + id + '\',\'approve\',' + Number(i.amount || 0) + ')">Setujui &amp; bukukan</button>' +
+              '<button class="tiny danger ghost" onclick="txDecide(\'' + id + '\',\'decline\',0)">Tolak</button>';
   }
-}
-
-function updatePendingCombinedBadge() {
-  const badge = document.getElementById("pendingBadge");
-  if (!badge) return;
-  const total = (pendingEditsCount || 0) + (pendingTxCount || 0);
-  if (total > 0) {
-    badge.style.display = "inline-block";
-    badge.textContent = total;
-  } else {
-    badge.style.display = "none";
+  else if (i.kind === "usulan-tindakan") {
+    const steps = d.steps || [];
+    if (d.reasoning) body += '<div class="sub">' + esc(d.reasoning) + "</div>";
+    if (steps.length) body += '<div style="margin-top:8px">' + steps.map(function(s){ return '<div class="step">' + esc(s) + "</div>"; }).join("") + "</div>";
+    if (d.risk) body += '<div class="risk">' + esc(d.risk) + "</div>";
+    actions = '<button class="tiny" onclick="routeDecide(\'' + id + '\',\'approve\')">Jalankan</button>' +
+              '<button class="tiny danger ghost" onclick="routeDecide(\'' + id + '\',\'decline\')">Batalkan</button>';
   }
+  else if (i.kind === "klarifikasi") {
+    body += '<textarea id="clar_' + id + '" rows="1" placeholder="Jawaban Anda..." oninput="autoGrow(this)" style="margin-top:9px"></textarea>';
+    actions = '<button class="tiny" onclick="answerClar(\'' + id + '\')">Kirim jawaban</button>';
+  }
+  else if (i.kind === "akun") {
+    actions = '<button class="tiny" onclick="acctDecide(\'' + id + '\',\'approve\')">Setujui</button>' +
+              '<button class="tiny danger ghost" onclick="acctDecide(\'' + id + '\',\'decline\')">Tolak</button>';
+  }
+  else if (i.kind === "kode") {
+    if (d.pr_url) body += '<div class="sub mono"><a href="' + esc(d.pr_url) + '" target="_blank" rel="noopener">Lihat perubahan di GitHub</a></div>';
+    actions = '<button class="tiny" onclick="editDecide(\'' + id + '\',\'approve\')">Terapkan</button>' +
+              '<button class="tiny ghost" onclick="editRevise(\'' + id + '\')">Minta revisi</button>' +
+              '<button class="tiny danger ghost" onclick="editDecide(\'' + id + '\',\'decline\')">Tolak</button>';
+  }
+  else if (i.kind === "gagal-akunting") {
+    actions = '<button class="tiny" onclick="retryAccounting(\'' + esc(i.entry_id) + '\')">Coba lagi</button>';
+  }
+
+  return '<div class="item p' + (i.priority || 4) + '">' +
+    '<div class="kind">' + esc(i.kind_label || i.kind) + " &middot; " + esc(timeAgo(i.created_at)) + "</div>" +
+    '<div class="title">' + esc(i.title) + "</div>" +
+    (i.subtitle ? '<div class="sub">' + esc(i.subtitle) + "</div>" : "") +
+    body +
+    (actions ? '<div class="btn-row">' + actions + "</div>" : "") +
+  "</div>";
 }
 
-function formatRibuan(n) {
-  const num = Number(n) || 0;
-  const rounded = Math.round(num);
-  return Math.abs(rounded).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-}
-
-async function refreshPendingTransactions() {
-  const el = document.getElementById("pendingTransactionsList");
-  if (el) el.innerHTML = skeleton(2);
+/* ---------- composer ---------- */
+async function planFromComposer(){
+  const el = $("composer");
+  const text = el.value.trim();
+  if (!text) { toast("Tulis sesuatu dulu.", true); return; }
+  const btn = $("btnPlan");
+  btn.disabled = true; btn.textContent = "Membaca maksud...";
+  $("proposalBox").innerHTML = "";
   try {
-    const r = await call("list-pending-transactions", { status: "pending", limit: 50 });
-    const txs = r.pending_transactions || [];
-    renderPendingTransactions(txs);
-    pendingTxCount = r.count !== undefined && r.count !== null ? r.count : txs.length;
-    updatePendingCombinedBadge();
-  } catch (err) {
-    showError(String(err.message || err));
-  }
+    const r = await call("route-entry", { text: text });
+    currentProposal = r.proposal;
+    renderProposal(r.proposal);
+  } catch (err) { fail(err); }
+  finally { btn.disabled = false; btn.textContent = "Susun rencana"; }
 }
 
-function renderPendingTransactions(txs) {
-  const el = document.getElementById("pendingTransactionsList");
-  if (!el) return;
-  if (!txs || txs.length === 0) {
-    el.innerHTML = '<p class="muted">Tidak ada jurnal yang menunggu persetujuan.</p>';
-    return;
+function renderProposal(p){
+  if (!p) return;
+  const cls = p.intent === "instruksi-kode" ? "kode" : (p.intent === "pertanyaan" ? "pertanyaan" : "");
+  let h = '<div class="proposal">';
+  h += '<span class="intent ' + cls + '">' + esc(p.intent) + "</span>";
+  if (p.confidence != null) h += '<span class="muted mono" style="margin-left:8px">keyakinan ' + esc(String(p.confidence)) + "</span>";
+  if (p.reasoning) h += '<div class="sub" style="margin-top:9px">' + esc(p.reasoning) + "</div>";
+  if ((p.planned_steps || []).length) {
+    h += '<div style="margin-top:9px">' + p.planned_steps.map(function(s){ return '<div class="step">' + esc(s) + "</div>"; }).join("") + "</div>";
   }
-  el.innerHTML = txs.map(t => {
-    const lines = t.lines || [];
-    const movements = t.inventory_movements || [];
-    const proposal = t.account_proposal;
-    const linesHtml = lines.map(l => {
-      const debit = Number(l.debit) || 0;
-      const credit = Number(l.credit) || 0;
-      return `
-      <tr>
-        <td style="padding:4px 6px; font-size:12px; border-bottom:1px solid var(--border);">${escapeHtml(l.account_name || "")} <span class="muted mono" style="font-size:10px;">${escapeHtml(l.account_code || "")}</span></td>
-        <td style="padding:4px 6px; font-size:12px; text-align:right; border-bottom:1px solid var(--border);" class="mono">${debit > 0 ? escapeHtml(formatRibuan(debit)) : ""}</td>
-        <td style="padding:4px 6px; font-size:12px; text-align:right; border-bottom:1px solid var(--border);" class="mono">${credit > 0 ? escapeHtml(formatRibuan(credit)) : ""}</td>
-      </tr>
-      `;
-    }).join("");
-    const movementsHtml = movements.length ? `
-      <div style="margin-top:10px;">
-        <div class="muted" style="font-size:11px; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px;">Pergerakan Stok</div>
-        ${movements.map(m => {
-          const name = m.item_name || m.name || "(tanpa nama)";
-          const dir = m.direction || (Number(m.quantity) < 0 ? "keluar" : "masuk");
-          const qty = m.quantity !== undefined ? m.quantity : m.qty;
-          const unit = m.unit || "";
-          return `<div class="muted mono" style="font-size:11px;">${escapeHtml(name)} &middot; ${escapeHtml(dir)} ${escapeHtml(String(qty))} ${escapeHtml(unit)}</div>`;
-        }).join("")}
-      </div>
-    ` : "";
-    const proposalHtml = proposal ? `
-      <div style="margin-top:10px;">
-        <span class="badge">Usul akun baru: ${escapeHtml(proposal.proposed_name || proposal.name || "")}</span>
-      </div>
-    ` : "";
-    const declineInputId = "declineNote_" + t.id;
-    const amountAttr = escapeHtml(JSON.stringify(t.total_amount));
-    return `
-    <div class="card pending">
-      <div style="font-size:14px; font-weight:600; line-height:1.5;">${escapeHtml(t.description || "(tanpa deskripsi)")}</div>
-      <div class="mono" style="font-size:22px; font-weight:700; color: var(--navy); margin-top:6px;">${escapeHtml(formatRupiah(t.total_amount))}</div>
-      ${t.reason ? `<div class="muted" style="margin-top:4px; font-size:12px;">${escapeHtml(t.reason)}</div>` : ""}
-      <div class="muted mono" style="margin-top:4px; font-size:11px;">${escapeHtml(timeAgo(t.created_at))}</div>
-      ${lines.length ? `
-      <table style="width:100%; border-collapse:collapse; margin-top:12px;">
-        <thead>
-          <tr>
-            <th style="text-align:left; padding:4px 6px; font-size:10px; text-transform:uppercase; color:var(--muted); letter-spacing:0.5px;">Akun</th>
-            <th style="text-align:right; padding:4px 6px; font-size:10px; text-transform:uppercase; color:var(--muted); letter-spacing:0.5px;">Debit</th>
-            <th style="text-align:right; padding:4px 6px; font-size:10px; text-transform:uppercase; color:var(--muted); letter-spacing:0.5px;">Kredit</th>
-          </tr>
-        </thead>
-        <tbody>${linesHtml}</tbody>
-      </table>
-      ` : ""}
-      ${movementsHtml}
-      ${proposalHtml}
-      <div style="margin-top:12px;">
-        <input id="${declineInputId}" placeholder="Catatan alasan tolak (opsional)..." />
-        <div class="row" style="margin-top:8px;">
-          <button class="tiny" onclick='approvePendingTransaction("${t.id}", ${amountAttr})'>Setujui &amp; Bukukan</button>
-          <button class="secondary tiny" style="border-color:#d13b2a; color:#b3392a;" onclick="declinePendingTransaction('${t.id}','${declineInputId}')">Tolak</button>
-        </div>
-      </div>
-    </div>
-    `;
-  }).join("");
+  if (p.risk_note) h += '<div class="risk">' + esc(p.risk_note) + "</div>";
+  h += '<div class="btn-row">' +
+       '<button class="tiny" onclick="execProposal(\'approve\')">Jalankan</button>' +
+       '<button class="tiny danger ghost" onclick="execProposal(\'decline\')">Batalkan</button>' +
+       "</div></div>";
+  $("proposalBox").innerHTML = h;
 }
 
-async function approvePendingTransaction(id, amount) {
-  clearNotice();
-  clearError();
-  const amountStr = formatRupiah(amount);
-  if (!confirm(`Setujui & bukukan transaksi senilai ${amountStr}? Angka ini akan masuk ke buku besar.`)) return;
+async function execProposal(decision){
+  if (!currentProposal) return;
+  const box = $("proposalBox");
+  box.innerHTML = '<div class="card tight"><div class="sk" style="width:55%"></div></div>';
   try {
-    const res = await call("review-transaction", { pending_id: id, decision: "approve" });
-    showNotice(res.message || "Transaksi disetujui dan dibukukan.");
-    refreshPendingTransactions();
-  } catch (err) {
-    handlePendingTxError(err);
-  }
-}
-
-async function declinePendingTransaction(id, inputId) {
-  clearNotice();
-  clearError();
-  const inp = document.getElementById(inputId);
-  const note = inp ? inp.value.trim() : "";
-  try {
-    const res = await call("review-transaction", { pending_id: id, decision: "decline", note });
-    showNotice(res.message || "Transaksi ditolak.");
-    refreshPendingTransactions();
-  } catch (err) {
-    handlePendingTxError(err);
-  }
-}
-
-function handlePendingTxError(err) {
-  if (err && err.status === 409) {
-    showNotice("Usulan sudah diputuskan sebelumnya.");
-    refreshPendingTransactions();
-  } else {
-    showError(String((err && err.message) || err));
-  }
-}
-
-function updateSummary(entries, pending, stats) {
-  stats = stats || {};
-  const total = (stats.total_entries !== undefined && stats.total_entries !== null)
-    ? stats.total_entries : entries.length;
-  const unclassified = (stats.total_unclassified !== undefined && stats.total_unclassified !== null)
-    ? stats.total_unclassified : entries.filter(e => e.status === "new").length;
-  const pendingCount = pending.length;
-
-  document.getElementById("sumTotal").textContent = total;
-  document.getElementById("sumUnclassified").textContent = unclassified;
-  document.getElementById("sumPending").textContent = pendingCount;
-
-  pendingEditsCount = pendingCount;
-  updatePendingCombinedBadge();
-}
-
-async function submitEntry() {
-  const text = document.getElementById("composeInput").value.trim();
-  if (!text) return;
-  clearNotice();
-  const btn = document.getElementById("btnKirim");
-  const twin = document.getElementById("btnInstruction");
-  let origText = "";
-  if (btn) { origText = btn.textContent; btn.disabled = true; btn.textContent = "Mengirim..."; }
-  if (twin) twin.disabled = true;
-  try {
-    await call("ingest", { type: "text", content: text, metadata: { source: "standalone_console" } });
-    document.getElementById("composeInput").value = "";
-    refresh();
-  } catch (err) {
-    showError(String(err.message || err));
-  } finally {
-    if (btn) { btn.disabled = false; btn.textContent = origText || "Kirim"; }
-    if (twin) twin.disabled = false;
-  }
-}
-
-async function planWageTomorrow() {
-  const composeEl = document.getElementById("composeInput");
-  if (!composeEl) return;
-  const besok = new Date(Date.now() + 24 * 60 * 60 * 1000);
-  const tgl = besok.getDate() + "/" + (besok.getMonth() + 1) + "/" + besok.getFullYear();
-  composeEl.value = "Tolong bantu susun rencana keuangan untuk upah kerja besok (" + tgl + "). Hitung total upah yang perlu disiapkan berdasarkan data kas dan transaksi terakhir, siapkan alokasi dana, dan catat sebagai rencana pengeluaran di jurnal jika perlu.";
-  await submitInstruction();
-}
-
-async function submitInstruction() {
-  const text = document.getElementById("composeInput").value.trim();
-  if (!text) return;
-  clearNotice();
-  clearError();
-  const btn = document.getElementById("btnInstruction");
-  const twin = document.getElementById("btnKirim");
-  let origText = "";
-  if (btn) { origText = btn.textContent; btn.disabled = true; btn.textContent = "AI sedang bekerja... (bisa 1 menit)"; }
-  if (twin) twin.disabled = true;
-  try {
-    const ingested = await call("ingest", { type: "text", content: text, skip_accounting: true, metadata: { source: "standalone_console", is_instruction: true } });
-    const entryId = ingested.entry_id || (ingested.entry && ingested.entry.id) || ingested.id;
-    if (!entryId) throw new Error("Gagal mendapatkan entry_id dari hasil ingest.");
-    await call("interpret-instruction", { entry_id: entryId });
-    document.getElementById("composeInput").value = "";
-    showNotice("Instruksi diterima. AI sedang menyusun PR (pending edit) untuk perubahan ini \\u2014 cek tab \"Keputusan\" sebentar lagi.");
-    refresh();
-  } catch (err) {
-    showError(String(err.message || err));
-  } finally {
-    if (btn) { btn.disabled = false; btn.textContent = origText || "Jadikan Instruksi AI"; }
-    if (twin) twin.disabled = false;
-  }
-}
-
-async function askHonrai() {
-  const inp = document.getElementById("askInput");
-  const question = inp ? inp.value.trim() : "";
-  if (!question) return;
-  clearNotice();
-  const btn = document.getElementById("btnTanya");
-  let origText = "";
-  if (btn) { origText = btn.textContent; btn.disabled = true; btn.textContent = "Berpikir... (bisa 1 menit)"; }
-  try {
-    const res = await call("recall", { question });
-    renderAskAnswer(res);
-  } catch (err) {
-    showError(String(err.message || err));
-  } finally {
-    if (btn) { btn.disabled = false; btn.textContent = origText || "Tanya"; }
-  }
-}
-
-function renderAskAnswer(res) {
-  const el = document.getElementById("askAnswerCard");
-  if (!el) return;
-  const answer = res.answer || "";
-  const entriesUsed = res.entries_used;
-  const paragraphs = String(answer).split(/\n{2,}/).map(p => `<p style="margin:0 0 10px;">${escapeHtml(p)}</p>`).join("");
-  el.innerHTML = `
-    <div class="card">
-      <div style="line-height:1.7;">${paragraphs}</div>
-      ${entriesUsed !== undefined && entriesUsed !== null ? `<div class="muted" style="margin-top:8px;">Berdasarkan ${escapeHtml(String(entriesUsed))} catatan</div>` : ""}
-    </div>
-  `;
-}
-
-async function classifyEntry(id) {
-  try {
-    await call("classify", { entry_id: id });
-    refresh();
-  } catch (err) {
-    showError(String(err.message || err));
-  }
-}
-
-async function decide(id, decision) {
-  try {
+    const r = await call("route-execute", { proposal_id: currentProposal.id, decision: decision });
     if (decision === "decline") {
-      if (!confirm("Yakin tolak permanen? PR akan ditutup.")) return;
+      box.innerHTML = "";
+      currentProposal = null;
+      toast("Dibatalkan. Tidak ada yang dijalankan.");
+      loadInbox();
+      return;
     }
-    let feedback;
-    if (decision === "refine") {
-      feedback = prompt("Feedback buat revisi:");
-      if (!feedback) return;
+    if (r.answer) {
+      const m = r.memory_used || {};
+      box.innerHTML = '<div class="card tight" style="margin-top:10px">' + esc(r.answer).replace(/\n/g,"<br>") +
+        '<div class="meta">' + (m.facts || 0) + " fakta &middot; " + (m.edges || 0) + " relasi &middot; " + (m.episodes || 0) + " episode</div></div>";
+    } else {
+      box.innerHTML = "";
+      $("composer").value = "";
+      autoGrow($("composer"));
+      const st = r.steps || {};
+      toast(st.pr_url ? "Perubahan diajukan sebagai PR." : "Tersimpan." + (st.consolidate_queued ? " Sedang disuling ke memori." : ""));
     }
-    await call("review-edit", { pending_edit_id: id, decision, revision_feedback: feedback });
-    refresh();
-  } catch (err) {
-    showError(String(err.message || err));
-  }
+    currentProposal = null;
+    loadInbox();
+    loadBrief();
+  } catch (err) { fail(err); box.innerHTML = ""; }
 }
 
-async function triggerRevision(id) {
+/* ---------- aksi inbox ---------- */
+async function txDecide(id, decision, amount){
+  if (decision === "approve" && !confirm("Bukukan " + rupiah(amount) + " ke buku besar?")) return;
+  try {
+    const r = await call("review-transaction", { pending_id: id, decision: decision });
+    toast(r.message || "Selesai."); loadInbox(); loadBrief();
+  } catch (err) { fail(err); }
+}
+async function routeDecide(id, decision){
+  try {
+    const r = await call("route-execute", { proposal_id: id, decision: decision });
+    toast(r.message || (r.answer ? "Dijawab." : "Selesai."));
+    if (r.answer) toast(r.answer.slice(0, 120));
+    loadInbox();
+  } catch (err) { fail(err); }
+}
+async function answerClar(id){
+  const el = $("clar_" + id);
+  const answer = el ? el.value.trim() : "";
+  if (!answer) { toast("Isi jawaban dulu.", true); return; }
+  try {
+    await call("answer-clarification", { clarification_id: id, answer: answer });
+    toast("Jawaban terkirim."); loadInbox();
+  } catch (err) { fail(err); }
+}
+async function acctDecide(id, decision){
+  try {
+    await call("review-account-proposal", { proposal_id: id, decision: decision });
+    toast(decision === "approve" ? "Akun dibuat." : "Usulan ditolak."); loadInbox();
+  } catch (err) { fail(err); }
+}
+async function editDecide(id, decision){
+  let feedback = "";
+  if (decision === "decline") feedback = prompt("Alasan menolak (opsional):") || "";
+  try {
+    await call("review-edit", { pending_edit_id: id, decision: decision, revision_feedback: feedback });
+    toast(decision === "approve" ? "Perubahan diterapkan." : "Ditolak."); loadInbox();
+  } catch (err) { fail(err); }
+}
+async function editRevise(id){
   try {
     await call("revise-edit", { pending_edit_id: id });
-    refresh();
-  } catch (err) {
-    showError(String(err.message || err));
-  }
+    toast("Revisi diminta."); loadInbox();
+  } catch (err) { fail(err); }
 }
-
-async function answerClarification(id, inputId) {
-  clearNotice();
-  clearError();
-  const inp = document.getElementById(inputId);
-  const answer = inp ? inp.value.trim() : "";
-  if (!answer) return;
-  try {
-    await call("answer-clarification", { clarification_id: id, answer });
-    showNotice("Jawaban klarifikasi terkirim.");
-    refreshAkuntansi();
-  } catch (err) {
-    showError(String(err.message || err));
-  }
-}
-
-async function reviewAccountProposal(id, decision) {
-  clearNotice();
-  clearError();
-  try {
-    if (decision === "decline") {
-      if (!confirm("Yakin tolak permanen? PR akan ditutup.")) return;
-    }
-    await call("review-account-proposal", { proposal_id: id, decision });
-    showNotice(decision === "approve" ? "Usulan akun disetujui." : "Usulan akun ditolak.");
-    refreshAkuntansi();
-  } catch (err) {
-    showError(String(err.message || err));
-  }
-}
-
-function timeAgo(dateInput) {
-  if (!dateInput) return "";
-  const d = new Date(dateInput);
-  if (isNaN(d.getTime())) return "";
-  const now = new Date();
-  const diffMs = now - d;
-  const diffSec = Math.floor(diffMs / 1000);
-  const diffMin = Math.floor(diffSec / 60);
-  const diffHour = Math.floor(diffMin / 60);
-  const diffDay = Math.floor(diffHour / 24);
-
-  if (diffSec < 60) return "baru saja";
-  if (diffMin < 60) return diffMin + " mnt lalu";
-  if (diffHour < 24) return diffHour + " jam lalu";
-  if (diffDay === 1) return "kemarin";
-  // tanggal singkat "21/7"
-  return d.getDate() + "/" + (d.getMonth() + 1);
-}
-
-function renderEntries(entries) {
-  const el = document.getElementById("entriesList");
-  if (entries.length === 0) { el.innerHTML = '<p class="muted">Belum ada entry.</p>'; return; }
-  el.innerHTML = entries.map(e => `
-    <div class="card flat">
-      <div style="display:flex; justify-content:space-between; gap:10px;">
-        <div style="flex:1; min-width:0;">
-          <div style="font-size:13px; line-height:1.55;">${escapeHtml(e.content || ("(" + e.type + ")"))}</div>
-          <div class="muted mono" style="margin-top:6px;">${escapeHtml(timeAgo(e.created_at))}${e.classifications && e.classifications[0] ? " &middot; " + escapeHtml(e.classifications[0].category || "") : ""}</div>
-        </div>
-        <div style="display:flex; flex-direction:column; gap:6px; align-items:flex-end;">
-          <span class="status">${escapeHtml(e.status || "new")}</span>
-          ${e.status === "new" ? `<button class="tiny" onclick="classifyEntry('${e.id}')">Klasifikasi</button>` : ""}
-        </div>
-      </div>
-    </div>
-  `).join("");
-}
-
-function renderPending(pending) {
-  const el = document.getElementById("pendingList");
-  if (pending.length === 0) { el.innerHTML = '<p class="muted">Tidak ada yang menunggu keputusan.</p>'; return; }
-  el.innerHTML = pending.map(p => {
-    const summary = p.summary || p.description || p.title || "(tanpa deskripsi)";
-    const target = p.target_table || p.target || "";
-    const diff = p.diff || p.changes || p.payload;
-    let diffStr = "";
-    if (diff) {
-      try { diffStr = typeof diff === "string" ? diff : JSON.stringify(diff, null, 2); }
-      catch (e) { diffStr = String(diff); }
-    }
-    return `
-    <div class="card pending">
-      <div style="display:flex; justify-content:space-between; gap:10px; align-items:flex-start;">
-        <div style="flex:1; min-width:0;">
-          <div style="font-size:14px; font-weight:600; line-height:1.5;">${escapeHtml(summary)}</div>
-          ${target ? `<div class="muted mono" style="margin-top:6px;">${escapeHtml(target)}</div>` : ""}
-          <div class="muted mono" style="margin-top:4px;">${escapeHtml(timeAgo(p.created_at))} &middot; ${escapeHtml(p.status || "pending")}</div>
-        </div>
-      </div>
-      ${diffStr ? `<pre class="mono" style="margin-top:12px; background:#f5f5f5; padding:10px; border-radius:6px; font-size:11px; line-height:1.5; overflow-x:auto; white-space:pre-wrap;">${escapeHtml(diffStr)}</pre>` : ""}
-      <div class="row" style="margin-top:12px;">
-        <button class="tiny" onclick="decide('${p.id}','approve')">Setujui</button>
-        <button class="secondary tiny" onclick="decide('${p.id}','decline')">Tolak</button>
-        <button class="secondary tiny" onclick="decide('${p.id}','refine')">Revisi</button>
-        <button class="secondary tiny" onclick="triggerRevision('${p.id}')">Auto-Revisi</button>
-      </div>
-    </div>
-  `;
-  }).join("");
-}
-
-function renderClarifications(clarifications) {
-  const el = document.getElementById("clarificationsList");
-  if (!clarifications || clarifications.length === 0) {
-    el.innerHTML = '<p class="muted">Tidak ada klarifikasi yang menunggu.</p>';
-    return;
-  }
-  el.innerHTML = clarifications.map(c => {
-    const question = c.question || c.prompt || c.message || "(tanpa pertanyaan)";
-    const context = c.context || c.entry_content || "";
-    const inputId = "clarInput_" + c.id;
-    return `
-    <div class="card pending">
-      <div style="font-size:14px; font-weight:600; line-height:1.5;">${escapeHtml(question)}</div>
-      ${context ? `<div class="muted" style="margin-top:6px; line-height:1.55;">${escapeHtml(context)}</div>` : ""}
-      <div class="muted mono" style="margin-top:4px;">${escapeHtml(timeAgo(c.created_at))} &middot; ${escapeHtml(c.status || "pending")}</div>
-      <div class="row" style="margin-top:12px;">
-        <input id="${inputId}" placeholder="Jawaban..." />
-        <button class="tiny" onclick="answerClarification('${c.id}','${inputId}')">Kirim</button>
-      </div>
-    </div>
-  `;
-  }).join("");
-}
-
-function renderAccountProposals(proposals) {
-  const el = document.getElementById("accountProposalsList");
-  if (!proposals || proposals.length === 0) {
-    el.innerHTML = '<p class="muted">Tidak ada usulan akun baru.</p>';
-    return;
-  }
-  el.innerHTML = proposals.map(p => {
-    const name = p.account_name || p.name || p.proposed_name || "(tanpa nama)";
-    const code = p.account_code || p.code || "";
-    const type = p.account_type || p.type || "";
-    const reason = p.reason || p.rationale || p.description || "";
-    return `
-    <div class="card pending">
-      <div style="font-size:14px; font-weight:600; line-height:1.5;">${escapeHtml(name)}${code ? ` <span class="muted mono">(${escapeHtml(code)})</span>` : ""}</div>
-      ${type ? `<div class="muted mono" style="margin-top:4px;">${escapeHtml(type)}</div>` : ""}
-      ${reason ? `<div class="muted" style="margin-top:6px; line-height:1.55;">${escapeHtml(reason)}</div>` : ""}
-      <div class="muted mono" style="margin-top:4px;">${escapeHtml(timeAgo(p.created_at))} &middot; ${escapeHtml(p.status || "pending")}</div>
-      <div class="row" style="margin-top:12px;">
-        <button class="tiny" onclick="reviewAccountProposal('${p.id}','approve')">Setujui</button>
-        <button class="secondary tiny" onclick="reviewAccountProposal('${p.id}','decline')">Tolak</button>
-      </div>
-    </div>
-  `;
-  }).join("");
-}
-
-function escapeHtml(str) {
-  if (str === null || str === undefined) return "";
-  return String(str)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-}
-
-function formatRupiah(n) {
-  const num = Number(n) || 0;
-  const rounded = Math.round(num);
-  const str = Math.abs(rounded).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-  return (rounded < 0 ? "-Rp " : "Rp ") + str;
-}
-
-async function refreshLaporan() {
-  clearError();
-  const cashEl = document.getElementById("laporanCashPosition");
-  const periodEl = document.getElementById("laporanPeriodSummary");
-  const balancesEl = document.getElementById("laporanAccountBalances");
-  const inventoryEl = document.getElementById("laporanInventory");
-  const txEl = document.getElementById("laporanTransactions");
-  if (cashEl) cashEl.innerHTML = skeleton(1);
-  if (periodEl) periodEl.innerHTML = skeleton(1);
-  if (balancesEl) balancesEl.innerHTML = skeleton(3);
-  if (inventoryEl) inventoryEl.innerHTML = skeleton(3);
-  if (txEl) txEl.innerHTML = skeleton(3);
-  try {
-    const r = await call("get-financial-report", {});
-    const failures = r.failures || [];
-    renderLaporanFailures(failures);
-    renderCashPosition(r.cash_position || {});
-    renderPeriodSummary(r.period_summary || {});
-    renderAccountBalances(r.account_balances || []);
-    renderInventory(r.inventory_stock || []);
-    renderTransactions(r.recent_transactions || []);
-    updateLaporanBadge(failures.length);
-  } catch (err) {
-    showError(String(err.message || err));
-  }
-}
-
-function updateLaporanBadge(count) {
-  const badge = document.getElementById("laporanBadge");
-  if (!badge) return;
-  if (count > 0) {
-    badge.style.display = "inline-block";
-    badge.textContent = count;
-  } else {
-    badge.style.display = "none";
-  }
-}
-
-function renderLaporanFailures(failures) {
-  const el = document.getElementById("laporanFailures");
-  if (!el) return;
-  if (!failures || failures.length === 0) { el.innerHTML = ""; return; }
-  el.innerHTML = `
-    <section>
-      <h2>Gagal Diproses</h2>
-      ${failures.map(f => {
-        const entry = f.entries || f.entry || {};
-        const content = entry.content || "(tanpa konten)";
-        const errorDetail = f.error_detail || f.error || "";
-        const btnId = "retryBtn_" + f.entry_id;
-        return `
-        <div class="card" style="border-left: 3px solid var(--lemon);">
-          <div style="font-size:13px; line-height:1.55;">${escapeHtml(content)}</div>
-          ${errorDetail ? `<div class="muted mono" style="margin-top:8px; font-size:11px; white-space:pre-wrap;">${escapeHtml(errorDetail)}</div>` : ""}
-          <div class="row" style="margin-top:12px;">
-            <button class="tiny" id="${btnId}" onclick="retryFailure('${f.entry_id}','${btnId}')">Coba Ulang</button>
-          </div>
-        </div>
-      `;
-      }).join("")}
-    </section>
-  `;
-}
-
-async function retryFailure(entryId, btnId) {
-  clearError();
-  const btn = document.getElementById(btnId);
-  let origText = "";
-  if (btn) { origText = btn.textContent; btn.disabled = true; btn.textContent = "Memproses..."; }
+async function retryAccounting(entryId){
   try {
     await call("process-accounting-entry", { entry_id: entryId });
-    refreshLaporan();
-  } catch (err) {
-    showError(String(err.message || err));
-  } finally {
-    if (btn) { btn.disabled = false; btn.textContent = origText || "Coba Ulang"; }
-  }
+    toast("Diproses ulang."); loadInbox();
+  } catch (err) { fail(err); }
 }
 
-function renderCashPosition(cp) {
-  const el = document.getElementById("laporanCashPosition");
-  if (!el) return;
-  const kas = cp.cash !== undefined ? cp.cash : cp.kas;
-  const bank = cp.bank;
-  const total = cp.total !== undefined ? cp.total : (Number(kas || 0) + Number(bank || 0));
-  el.innerHTML = `
-    <div class="summary-grid">
-      <div class="summary-card">
-        <div class="summary-num">${escapeHtml(formatRupiah(kas))}</div>
-        <div class="summary-label">Kas</div>
-      </div>
-      <div class="summary-card">
-        <div class="summary-num">${escapeHtml(formatRupiah(bank))}</div>
-        <div class="summary-label">Bank</div>
-      </div>
-      <div class="summary-card">
-        <div class="summary-num">${escapeHtml(formatRupiah(total))}</div>
-        <div class="summary-label">Total</div>
-      </div>
-    </div>
-  `;
-}
-
-function renderPeriodSummary(ps) {
-  const el = document.getElementById("laporanPeriodSummary");
-  if (!el) return;
-  el.innerHTML = `
-    <div class="summary-grid" style="grid-template-columns: repeat(2, 1fr);">
-      <div class="summary-card">
-        <div class="summary-num">${escapeHtml(formatRupiah(ps.month_revenue))}</div>
-        <div class="summary-label">Pendapatan</div>
-      </div>
-      <div class="summary-card">
-        <div class="summary-num">${escapeHtml(formatRupiah(ps.month_expense))}</div>
-        <div class="summary-label">Beban</div>
-      </div>
-    </div>
-  `;
-}
-
-function renderAccountBalances(balances) {
-  const el = document.getElementById("laporanAccountBalances");
-  if (!el) return;
-  if (!balances || balances.length === 0) { el.innerHTML = '<p class="muted">Tidak ada data saldo akun.</p>'; return; }
-  el.innerHTML = balances.map(a => {
-    const code = a.code || a.account_code || "";
-    const name = a.name || a.account_name || "";
-    const balance = a.balance !== undefined ? a.balance : a.saldo;
-    const isSuspense = (a.type || a.account_type || "").toLowerCase() === "suspense";
-    return `
-    <div class="card flat">
-      <div style="display:flex; justify-content:space-between; gap:10px; align-items:center;">
-        <div style="flex:1; min-width:0;">
-          <div style="font-size:13px; font-weight:600;">${escapeHtml(name)} ${isSuspense ? '<span style="color: var(--lemon);">&#9679; suspense</span>' : ""}</div>
-          <div class="muted mono" style="margin-top:4px;">${escapeHtml(code)}</div>
-        </div>
-        <div class="mono" style="font-weight:600; ${isSuspense ? "color: var(--lemon);" : ""}">${escapeHtml(formatRupiah(balance))}</div>
-      </div>
-    </div>
-  `;
-  }).join("");
-}
-
-function renderInventory(items) {
-  const el = document.getElementById("laporanInventory");
-  if (!el) return;
-  if (!items || items.length === 0) { el.innerHTML = '<p class="muted">Tidak ada data stok barang.</p>'; return; }
-  el.innerHTML = items.map(it => {
-    const name = it.name || it.item_name || "(tanpa nama)";
-    const stock = it.stock !== undefined ? it.stock : it.quantity;
-    const unit = it.unit || "";
-    const category = it.category || "";
-    const lastPrice = it.last_unit_price;
-    const isLow = Number(stock) <= 0;
-    return `
-    <div class="card flat">
-      <div style="display:flex; justify-content:space-between; gap:10px; align-items:center;">
-        <div style="flex:1; min-width:0; ${isLow ? "color: var(--muted);" : ""}">
-          <div style="font-size:13px; font-weight:600;">${escapeHtml(name)}</div>
-          <div class="muted mono" style="margin-top:4px;">${escapeHtml(category)}</div>
-        </div>
-        <div style="text-align:right;">
-          <div class="mono" style="font-weight:600; ${isLow ? "color: var(--muted);" : ""}">${escapeHtml(String(stock))} ${escapeHtml(unit)}</div>
-          <div class="muted mono" style="margin-top:4px; font-size:11px;">${escapeHtml(formatRupiah(lastPrice))}</div>
-        </div>
-      </div>
-    </div>
-  `;
-  }).join("");
-}
-
-function renderTransactions(txs) {
-  const el = document.getElementById("laporanTransactions");
-  if (!el) return;
-  if (!txs || txs.length === 0) { el.innerHTML = '<p class="muted">Belum ada transaksi.</p>'; return; }
-  el.innerHTML = txs.map(t => {
-    const date = t.date || t.created_at || t.transaction_date;
-    const description = t.description || t.desc || "(tanpa deskripsi)";
-    const lines = t.lines || t.entries || t.details || [];
-    return `
-    <div class="card flat">
-      <div style="display:flex; justify-content:space-between; gap:10px;">
-        <div style="flex:1; min-width:0;">
-          <div style="font-size:13px; font-weight:600; line-height:1.5;">${escapeHtml(description)}</div>
-          <div class="muted mono" style="margin-top:4px;">${escapeHtml(timeAgo(date))}</div>
-        </div>
-      </div>
-      ${lines && lines.length ? `
-      <div style="margin-top:10px; display:flex; flex-direction:column; gap:4px;">
-        ${lines.map(l => {
-          const accName = l.account_name || l.account || "";
-          const debit = l.debit;
-          const credit = l.credit;
-          const isDebit = Number(debit) > 0;
-          return `
-          <div class="muted mono" style="font-size:11px; display:flex; justify-content:space-between;">
-            <span>${escapeHtml(accName)}</span>
-            <span style="color: ${isDebit ? 'var(--navy)' : 'var(--text)'};">${isDebit ? "D " + escapeHtml(formatRupiah(debit)) : "K " + escapeHtml(formatRupiah(credit))}</span>
-          </div>
-        `;
-        }).join("")}
-      </div>
-      ` : ""}
-    </div>
-  `;
-  }).join("");
-}
-
-async function refreshMemori() {
-  clearError();
-  const factsEl = document.getElementById("memoryFactsList");
-  const relEl = document.getElementById("memoryRelationsList");
-  const epEl = document.getElementById("memoryEpisodesList");
-  const sumEl = document.getElementById("memorySummaryLine");
-  if (factsEl) factsEl.innerHTML = skeleton(3);
-  if (relEl) relEl.innerHTML = skeleton(2);
-  if (epEl) epEl.innerHTML = skeleton(2);
-  if (sumEl) sumEl.textContent = "";
+/* ---------- MEMORI ---------- */
+async function loadMemori(){
+  $("memFacts").innerHTML = skel(3);
   try {
     const r = await call("memory-browse", { limit: 100 });
-    const summary = r.summary || {};
-    if (sumEl) {
-      sumEl.textContent = (summary.facts || 0) + " fakta \\u00b7 " + (summary.entities || 0) + " entitas \\u00b7 " + (summary.relations || 0) + " relasi \\u00b7 " + (summary.episodes || 0) + " episode";
-    }
-    renderMemoryFacts(r.facts || []);
-    renderMemoryRelations(r.relations || []);
-    renderMemoryEpisodes(r.episodes || []);
+    const s = r.summary || {};
+    $("memSummary").textContent = (s.facts || 0) + " fakta \u00b7 " + (s.entities || 0) + " entitas \u00b7 " +
+      (s.relations || 0) + " relasi \u00b7 " + (s.episodes || 0) + " episode";
+    renderFacts(r.facts || []);
+    $("memRelations").innerHTML = (r.relations || []).length
+      ? (r.relations || []).map(function(x){ return '<div class="card tight mono" style="font-size:12.5px">' + esc(x.text) + "</div>"; }).join("")
+      : '<div class="empty">Belum ada relasi.</div>';
+    $("memEpisodes").innerHTML = (r.episodes || []).length
+      ? (r.episodes || []).map(function(e){
+          return '<div class="card tight"><div style="font-size:14px">' + esc(e.summary) + "</div>" +
+                 '<div class="meta">' + esc(e.occurred_at ? new Date(e.occurred_at).toLocaleDateString("id-ID") : "") + "</div></div>";
+        }).join("")
+      : '<div class="empty">Belum ada episode.</div>';
   } catch (err) {
-    showError(String(err.message || err));
+    $("memFacts").innerHTML = '<div class="empty">Gagal memuat: ' + esc((err && err.message) || err) + "</div>";
   }
 }
-
-function renderMemoryFacts(facts) {
-  const el = document.getElementById("memoryFactsList");
-  if (!el) return;
-  if (!facts || facts.length === 0) {
-    el.innerHTML = '<p class="muted">Memori masih kosong. Mulai catat sesuatu, nanti aku ingat.</p>';
-    return;
-  }
-  el.innerHTML = facts.map(f => {
-    const catLine = [f.category, f.subcategory].filter(Boolean).join(" / ");
-    const metaBits = [];
-    if (catLine) metaBits.push(escapeHtml(catLine));
-    metaBits.push("salience " + escapeHtml(String(f.salience !== undefined && f.salience !== null ? f.salience : "")));
-    metaBits.push("diperkuat " + escapeHtml(String(f.reinforced_count !== undefined && f.reinforced_count !== null ? f.reinforced_count : 0)) + "x");
-    metaBits.push("dipakai " + escapeHtml(String(f.access_count !== undefined && f.access_count !== null ? f.access_count : 0)) + "x");
-    const sources = f.sources || [];
-    const sourcesId = "memSources_" + f.id;
-    const contentId = "memContent_" + f.id;
-    const importanceId = "memImportance_" + f.id;
-    return `
-    <div class="card">
-      <div style="font-size:14px; line-height:1.55;">${escapeHtml(f.content || "")}</div>
-      <div class="muted mono" style="margin-top:8px; font-size:11px;">${metaBits.join(" &middot; ")}</div>
-      ${sources.length ? `
-      <div style="margin-top:10px;">
-        <button class="secondary tiny" onclick="toggleMemSources('${sourcesId}')">Lihat asal</button>
-        <div id="${sourcesId}" style="display:none; margin-top:10px;">
-          ${sources.map(s => `<div class="muted mono" style="font-size:11px; margin-bottom:6px;">${escapeHtml(s.preview || "")} &middot; ${escapeHtml(timeAgo(s.created_at))}</div>`).join("")}
-        </div>
-      </div>
-      ` : ""}
-      <div id="memEditWrap_${f.id}" style="display:none; margin-top:12px;">
-        <textarea id="${contentId}" rows="2">${escapeHtml(f.content || "")}</textarea>
-        <input id="${importanceId}" type="number" min="0" max="1" step="0.01" value="${escapeHtml(String(f.importance !== undefined && f.importance !== null ? f.importance : ""))}" style="margin-top:8px;" />
-        <div class="row" style="margin-top:8px;">
-          <button class="tiny" onclick="saveMemoryFact('${f.id}','${contentId}','${importanceId}')">Simpan</button>
-          <button class="secondary tiny" onclick="toggleMemEdit('${f.id}')">Batal</button>
-        </div>
-      </div>
-      <div class="row" style="margin-top:12px;">
-        <button class="secondary tiny" onclick="toggleMemEdit('${f.id}')">Perbaiki</button>
-        <button class="secondary tiny" onclick="archiveMemoryFact('${f.id}')">Arsipkan</button>
-      </div>
-    </div>
-    `;
+function renderFacts(facts){
+  if (!facts.length) { $("memFacts").innerHTML = '<div class="empty">Memori masih kosong. Mulai catat sesuatu, nanti saya ingat.</div>'; return; }
+  const max = Math.max.apply(null, facts.map(function(f){ return Number(f.salience) || 0; }).concat([1]));
+  $("memFacts").innerHTML = facts.map(function(f){
+    const id = esc(f.id);
+    const pct = Math.round((Number(f.salience) || 0) / max * 100);
+    return '<div class="fact" id="fact_' + id + '">' +
+      '<div class="c">' + esc(f.content) + "</div>" +
+      '<div class="bar"><i style="width:' + pct + '%"></i></div>' +
+      '<div class="meta"><span>' + esc(f.category || "-") + "</span><span>salience " + esc(String(f.salience)) +
+        "</span><span>diperkuat " + (f.reinforced_count || 1) + "\u00d7</span><span>dipakai " + (f.access_count || 0) + "\u00d7</span></div>" +
+      '<div class="btn-row">' +
+        '<button class="tiny ghost" onclick="toggleSrc(\'' + id + '\')">Asal (' + ((f.sources || []).length) + ")</button>" +
+        '<button class="tiny ghost" onclick="toggleEdit(\'' + id + '\')">Perbaiki</button>' +
+        '<button class="tiny danger ghost" onclick="archiveFact(\'' + id + '\')">Arsipkan</button>' +
+      "</div>" +
+      '<div class="src hidden" id="src_' + id + '">' +
+        ((f.sources || []).map(function(s){
+          return "<div>" + esc(s.preview || "(tidak ditemukan)") + '<br><span class="mono">' + esc(timeAgo(s.created_at)) + "</span></div>";
+        }).join("") || "<div>Tidak ada catatan asal.</div>") +
+      "</div>" +
+      '<div class="hidden" id="edit_' + id + '" style="margin-top:9px">' +
+        '<textarea id="ec_' + id + '" rows="2" oninput="autoGrow(this)">' + esc(f.content) + "</textarea>" +
+        '<div style="height:8px"></div>' +
+        '<input type="number" id="ei_' + id + '" step="0.05" min="0" max="1" value="' + esc(String(f.importance)) + '" />' +
+        '<div class="btn-row"><button class="tiny" onclick="saveFact(\'' + id + '\')">Simpan</button></div>' +
+      "</div>" +
+    "</div>";
   }).join("");
 }
-
-function toggleMemSources(id) {
-  const el = document.getElementById(id);
-  if (!el) return;
-  el.style.display = el.style.display === "none" ? "block" : "none";
-}
-
-function toggleMemEdit(id) {
-  const el = document.getElementById("memEditWrap_" + id);
-  if (!el) return;
-  el.style.display = el.style.display === "none" ? "block" : "none";
-}
-
-async function saveMemoryFact(id, contentId, importanceId) {
-  clearNotice();
-  clearError();
-  const contentEl = document.getElementById(contentId);
-  const importanceEl = document.getElementById(importanceId);
-  const content = contentEl ? contentEl.value.trim() : "";
-  const importance = importanceEl && importanceEl.value !== "" ? Number(importanceEl.value) : undefined;
-  if (!content) return;
+function toggleSrc(id){ const e = $("src_" + id); if (e) e.classList.toggle("hidden"); }
+function toggleEdit(id){ const e = $("edit_" + id); if (e) { e.classList.toggle("hidden"); const t = $("ec_" + id); if (t) autoGrow(t); } }
+async function saveFact(id){
+  const c = $("ec_" + id).value.trim();
+  const imp = parseFloat($("ei_" + id).value);
+  if (!c) { toast("Isi tidak boleh kosong.", true); return; }
   try {
-    const res = await call("memory-edit", { action: "update", memory_id: id, kind: "semantic", content, importance });
-    showNotice(res.message || "Fakta diperbarui.");
-    refreshMemori();
-  } catch (err) {
-    showError(String(err.message || err));
-  }
+    const r = await call("memory-edit", { action: "update", memory_id: id, kind: "semantic", content: c, importance: isNaN(imp) ? undefined : imp });
+    toast(r.message || "Diperbarui."); loadMemori();
+  } catch (err) { fail(err); }
 }
-
-async function archiveMemoryFact(id) {
-  clearNotice();
-  clearError();
-  if (!confirm("Fakta ini tidak akan dipakai menjawab lagi, tapi masih bisa dipulihkan.")) return;
+async function archiveFact(id){
+  if (!confirm("Fakta ini tidak akan dipakai menjawab lagi, tapi masih bisa dipulihkan. Lanjutkan?")) return;
   try {
-    const res = await call("memory-edit", { action: "archive", memory_id: id, kind: "semantic" });
-    showNotice(res.message || "Fakta diarsipkan.");
-    refreshMemori();
+    const r = await call("memory-edit", { action: "archive", memory_id: id, kind: "semantic" });
+    toast(r.message || "Diarsipkan."); loadMemori();
+  } catch (err) { fail(err); }
+}
+
+/* ---------- CATATAN ---------- */
+async function loadCatatan(){
+  $("entryList").innerHTML = skel(3);
+  try {
+    const r = await call("list-entries", { limit: 30 });
+    const list = r.entries || [];
+    if (!list.length) { $("entryList").innerHTML = '<div class="empty">Belum ada catatan.</div>'; return; }
+    $("entryList").innerHTML = list.map(function(e){
+      const cls = (e.classifications && e.classifications[0]) || null;
+      const label = cls ? (cls.category + "/" + (cls.subcategory || "")) : null;
+      return '<div class="card tight">' +
+        '<div style="font-size:14px;line-height:1.5">' + esc((e.content || "").slice(0, 260)) + "</div>" +
+        '<div class="meta"><span>' + esc(timeAgo(e.created_at)) + "</span>" +
+        (label ? "<span>" + esc(label) + "</span>" : "") +
+        "<span>" + esc(e.status || "") + "</span></div>" +
+        (label ? "" : '<div class="btn-row"><button class="tiny ghost" onclick="classifyOne(\'' + esc(e.id) + '\')">Klasifikasi</button></div>') +
+      "</div>";
+    }).join("");
   } catch (err) {
-    showError(String(err.message || err));
+    $("entryList").innerHTML = '<div class="empty">Gagal memuat: ' + esc((err && err.message) || err) + "</div>";
   }
 }
-
-function renderMemoryRelations(relations) {
-  const el = document.getElementById("memoryRelationsList");
-  if (!el) return;
-  if (!relations || relations.length === 0) {
-    el.innerHTML = '<p class="muted">Belum ada relasi.</p>';
-    return;
-  }
-  el.innerHTML = relations.map(r => `
-    <div class="card flat">
-      <div style="font-size:13px; line-height:1.55;">${escapeHtml(r.text || "")}</div>
-      <div class="muted mono" style="margin-top:6px; font-size:11px;">bobot ${escapeHtml(String(r.weight !== undefined && r.weight !== null ? r.weight : ""))}</div>
-    </div>
-  `).join("");
+async function classifyOne(id){
+  try { await call("classify", { entry_id: id }); toast("Diklasifikasi."); loadCatatan(); }
+  catch (err) { fail(err); }
 }
 
-function renderMemoryEpisodes(episodes) {
-  const el = document.getElementById("memoryEpisodesList");
-  if (!el) return;
-  if (!episodes || episodes.length === 0) {
-    el.innerHTML = '<p class="muted">Belum ada episode.</p>';
-    return;
+/* ---------- KEUANGAN ---------- */
+async function loadKeuangan(){
+  $("finCash").innerHTML = skel(1);
+  $("finTx").innerHTML = skel(2);
+  try {
+    finData = await call("get-financial-report", {});
+    renderKeuangan();
+  } catch (err) {
+    $("finCash").innerHTML = '<div class="empty">Gagal memuat: ' + esc((err && err.message) || err) + "</div>";
   }
-  el.innerHTML = episodes.map(ep => `
-    <div class="card flat">
-      <div style="font-size:13px; line-height:1.55;">${escapeHtml(ep.summary || "")}</div>
-      <div class="muted mono" style="margin-top:6px; font-size:11px;">${escapeHtml(timeAgo(ep.occurred_at))}</div>
-    </div>
-  `).join("");
+}
+function setPeriod(p){ finPeriod = p; renderKeuangan(); }
+function renderKeuangan(){
+  const r = finData || {};
+  const cp = r.cash_position || {};
+  const kas = cp.kas != null ? cp.kas : (cp.cash != null ? cp.cash : 0);
+  const bank = cp.bank != null ? cp.bank : 0;
+  const total = cp.total != null ? cp.total : (Number(kas) + Number(bank));
+  $("finCash").innerHTML = '<div class="card"><div style="display:flex;gap:10px;text-align:center">' +
+    '<div style="flex:1"><div style="font-size:17px;font-weight:700">' + rupiah(kas) + '</div><div class="muted">Kas</div></div>' +
+    '<div style="flex:1"><div style="font-size:17px;font-weight:700">' + rupiah(bank) + '</div><div class="muted">Bank</div></div>' +
+    '<div style="flex:1"><div style="font-size:17px;font-weight:700;color:var(--navy)">' + rupiah(total) + '</div><div class="muted">Total</div></div>' +
+    "</div></div>";
+
+  const opts = [["minggu","7 hari"],["bulan","30 hari"],["semua","Semua"]];
+  $("finPeriodSeg").innerHTML = opts.map(function(o){
+    return '<button class="' + (finPeriod === o[0] ? "on" : "") + '" onclick="setPeriod(\'' + o[0] + '\')">' + o[1] + "</button>";
+  }).join("");
+
+  const txAll = r.recent_transactions || [];
+  const days = finPeriod === "minggu" ? 7 : (finPeriod === "bulan" ? 30 : 100000);
+  const cutoff = Date.now() - days * 86400000;
+  const tx = txAll.filter(function(t){
+    const d = new Date(t.transaction_date || t.date).getTime();
+    return isNaN(d) ? true : d >= cutoff;
+  });
+
+  let masuk = 0, keluar = 0;
+  tx.forEach(function(t){
+    (t.lines || []).forEach(function(l){
+      const name = (l.account_name || "").toLowerCase();
+      if (name.indexOf("kas") >= 0 || name.indexOf("bank") >= 0) {
+        masuk += Number(l.debit || 0);
+        keluar += Number(l.credit || 0);
+      }
+    });
+  });
+  $("finSummary").innerHTML = '<div class="card"><div style="display:flex;gap:10px;text-align:center">' +
+    '<div style="flex:1"><div style="font-size:16px;font-weight:700;color:var(--ok)">' + rupiah(masuk) + '</div><div class="muted">Uang masuk</div></div>' +
+    '<div style="flex:1"><div style="font-size:16px;font-weight:700;color:var(--danger)">' + rupiah(keluar) + '</div><div class="muted">Uang keluar</div></div>' +
+    '<div style="flex:1"><div style="font-size:16px;font-weight:700">' + rupiah(masuk - keluar) + '</div><div class="muted">Selisih</div></div>' +
+    '</div><div class="muted" style="margin-top:8px">' + tx.length + " transaksi pada periode ini.</div></div>";
+
+  $("finBalances").innerHTML = (r.account_balances || []).map(function(b){
+    const sus = String(b.code) === "9999";
+    return '<div class="card tight" style="display:flex;justify-content:space-between;gap:10px">' +
+      '<div><div style="font-size:13.5px;font-weight:600">' + esc(b.name) + (sus ? ' <span style="color:var(--lemon)">&#9679;</span>' : "") + "</div>" +
+      '<div class="muted mono">' + esc(b.code) + "</div></div>" +
+      '<div class="mono" style="font-weight:600">' + rupiah(b.balance) + "</div></div>";
+  }).join("") || '<div class="empty">Belum ada saldo.</div>';
+
+  $("finInventory").innerHTML = (r.inventory_stock || []).map(function(i){
+    return '<div class="card tight" style="display:flex;justify-content:space-between;gap:10px">' +
+      "<div>" + esc(i.name || i.item_name) + "</div>" +
+      '<div class="mono">' + esc(String(i.quantity != null ? i.quantity : (i.stock || 0))) + " " + esc(i.unit || "") + "</div></div>";
+  }).join("") || '<div class="empty">Belum ada persediaan.</div>';
+
+  $("finTx").innerHTML = tx.length ? tx.map(function(t){
+    const lines = (t.lines || []).map(function(l){
+      const isD = Number(l.debit) > 0;
+      return '<div class="jrow"><span>' + esc(l.account_name || "") + '</span><span class="mono">' +
+             (isD ? "D " + rupiah(l.debit) : "K " + rupiah(l.credit)) + "</span></div>";
+    }).join("");
+    return '<div class="card tight"><div style="font-size:13.5px;font-weight:600">' + esc(t.description) + "</div>" +
+      '<div class="muted mono" style="margin-top:3px">' + esc(timeAgo(t.transaction_date || t.date)) + "</div>" +
+      (lines ? '<div style="margin-top:8px">' + lines + "</div>" : "") + "</div>";
+  }).join("") : '<div class="empty">Tidak ada transaksi pada periode ini.</div>';
 }
 
-// Auto-login kalau secret sudah tersimpan
-(function init() {
+/* ---------- tarik untuk memuat ulang ---------- */
+let touchStartY = 0, pulling = false;
+document.addEventListener("touchstart", function(e){
+  if (window.scrollY <= 0) { touchStartY = e.touches[0].clientY; pulling = true; }
+}, { passive: true });
+document.addEventListener("touchmove", function(e){
+  if (!pulling) return;
+  const dy = e.touches[0].clientY - touchStartY;
+  const hint = $("pullHint");
+  if (!hint) return;
+  if (dy > 12 && window.scrollY <= 0) hint.textContent = dy > 70 ? "Lepas untuk memuat ulang" : "Tarik untuk memuat ulang";
+  else hint.textContent = "";
+}, { passive: true });
+document.addEventListener("touchend", function(e){
+  if (!pulling) return;
+  pulling = false;
+  const hint = $("pullHint");
+  const dy = (e.changedTouches[0].clientY - touchStartY);
+  if (hint) hint.textContent = "";
+  if (dy > 70 && window.scrollY <= 0) { toast("Memuat ulang..."); refreshCurrent(); }
+}, { passive: true });
+
+/* ---------- init ---------- */
+(function init(){
   let saved = "";
   try { saved = localStorage.getItem(SECRET_KEY) || ""; } catch (e) {}
-  if (saved) {
-    SECRET = saved;
-    const inp = document.getElementById("secretInput");
-    if (inp) inp.value = saved;
-    call("list-entries", { limit: 1 })
-      .then(() => {
-        document.getElementById("loginView").style.display = "none";
-        document.getElementById("mainView").style.display = "block";
-        refresh();
-      })
-      .catch(() => {
-        // secret tersimpan tapi tidak valid; biarkan di login view
-      });
-  }
+  if (!saved) return;
+  SECRET = saved;
+  const inp = $("secretInput");
+  if (inp) inp.value = saved;
+  call("list-entries", { limit: 1 })
+    .then(function(){ enterApp(); })
+    .catch(function(){ $("loginMsg").textContent = "Kunci tersimpan tidak berlaku. Masukkan ulang."; });
 })();
 </script>
 </body>
