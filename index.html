@@ -747,7 +747,7 @@ async function askHonrai() {
   let origText = "";
   if (btn) { origText = btn.textContent; btn.disabled = true; btn.textContent = "Berpikir... (bisa 1 menit)"; }
   try {
-    const res = await call("synthesize", { question });
+    const res = await call("recall", { question });
     renderAskAnswer(res);
   } catch (err) {
     showError(String(err.message || err));
