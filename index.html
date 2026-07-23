@@ -409,15 +409,37 @@ async function loadHub(){
   loadInbox();
 }
 
-async function loadBrief(){
+/* Ringkasan harian: dicache per hari. Saat Hub dibuka hanya "mengintip" cache
+   (instan). Bila belum ada, tampilkan tombol -- jangan pernah memblokir layar
+   20-30 detik seperti versi sebelumnya. Bisa dilipat; pilihan diingat. */
+function briefCollapsed(){
+  try { return localStorage.getItem("brief_collapsed") === "1"; } catch(e){ return false; }
+}
+function toggleBrief(){
+  try { localStorage.setItem("brief_collapsed", briefCollapsed() ? "0" : "1"); } catch(e){}
+  renderBrief(lastBrief);
+}
+let lastBrief = null;
+
+function renderBrief(r){
   const el = $("briefBox");
-  el.innerHTML = '<div class="card brief"><div class="sk" style="width:60%;background:#2a3a55"></div><div class="sk" style="width:85%;background:#2a3a55"></div></div>';
-  try {
-    const r = await call("daily-brief", {});
-    const b = r.brief || {};
-    let h = '<div class="card brief">';
-    h += '<div class="date">' + esc(r.date || "") + "</div>";
-    h += '<div class="headline">' + esc(b.headline || "Tidak ada ringkasan.") + "</div>";
+  if (!r) { el.innerHTML = ""; return; }
+  const col = briefCollapsed();
+  const b = r.brief || {};
+  const nWarn = (b.warnings || []).length;
+
+  let h = '<div class="card brief">';
+  h += '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">';
+  h += '<div style="flex:1;min-width:0">';
+  h += '<div class="date">' + esc(r.date || "") + (r.cached ? " &middot; tersimpan" : "") + "</div>";
+  h += '<div class="headline">' + esc(b.headline || "Tidak ada ringkasan.") + "</div>";
+  h += "</div>";
+  h += '<button class="icon-btn" style="flex:none" onclick="toggleBrief()">' + (col ? "&#9662;" : "&#9652;") + "</button>";
+  h += "</div>";
+
+  if (col) {
+    if (nWarn) h += '<div class="muted" style="margin-top:8px;color:var(--lemon)">' + nWarn + " peringatan disembunyikan</div>";
+  } else {
     (b.warnings || []).forEach(function(w){ h += '<div class="warn">' + esc(w) + "</div>"; });
     (b.sections || []).forEach(function(s){
       h += '<div class="sec"><div class="sec-t">' + esc(s.title || "") + '</div><div class="sec-b">' + esc(s.body || "") + "</div></div>";
@@ -427,10 +449,41 @@ async function loadBrief(){
       (b.actions || []).forEach(function(a){ h += '<div class="act-item">' + esc(a) + "</div>"; });
       h += "</div>";
     }
-    h += "</div>";
-    el.innerHTML = h;
+    h += '<div class="btn-row"><button class="icon-btn" onclick="makeBrief(true)">Perbarui ringkasan</button></div>';
+  }
+  h += "</div>";
+  el.innerHTML = h;
+}
+
+async function loadBrief(){
+  const el = $("briefBox");
+  try {
+    const r = await call("daily-brief", { peek: true });
+    if (r.exists === false) {
+      lastBrief = null;
+      el.innerHTML = '<div class="card brief"><div class="date">' + esc(r.date || "") + "</div>" +
+        '<div class="headline" style="font-size:15px">Ringkasan hari ini belum disusun.</div>' +
+        '<div class="btn-row"><button class="icon-btn" onclick="makeBrief(false)">Susun ringkasan</button></div></div>';
+      return;
+    }
+    lastBrief = r;
+    renderBrief(r);
   } catch (err) {
-    el.innerHTML = '<div class="card"><div class="muted">Ringkasan harian tidak tersedia: ' + esc((err && err.message) || err) + "</div></div>";
+    el.innerHTML = '<div class="card"><div class="muted">Ringkasan tidak tersedia: ' + esc((err && err.message) || err) + "</div></div>";
+  }
+}
+
+async function makeBrief(force){
+  const el = $("briefBox");
+  el.innerHTML = '<div class="card brief"><div class="sk" style="width:60%;background:#2a3a55"></div>' +
+    '<div class="sk" style="width:85%;background:#2a3a55"></div>' +
+    '<div class="muted" style="color:rgba(255,255,255,.6)">Menyusun ringkasan, sekitar 20 detik...</div></div>';
+  try {
+    const r = await call("daily-brief", force ? { force: true } : {});
+    lastBrief = r;
+    renderBrief(r);
+  } catch (err) {
+    el.innerHTML = '<div class="card"><div class="muted">Gagal: ' + esc((err && err.message) || err) + "</div></div>";
   }
 }
 
