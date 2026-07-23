@@ -20,22 +20,30 @@
     --ok:#1f6f4a;
     --pad:16px;
     --nav-h:64px;
+    /* Skala tipografi: satu tangga jelas, bukan ukuran serba mirip.
+       Keluhan pemilik 23/7: "tulisannya kebesaran, tidak ada hirarki". */
+    --t-display:16px;   /* headline ringkasan */
+    --t-amount:20px;    /* angka uang - satu-satunya yang menonjol */
+    --t-title:14px;     /* judul kartu */
+    --t-body:13.5px;    /* isi */
+    --t-cap:11.5px;     /* keterangan */
+    --t-label:10.5px;   /* label kategori */
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html,body{margin:0;padding:0;background:var(--bg);color:var(--text)}
   body{
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
-    font-size:15px;line-height:1.55;
+    font-size:var(--t-body);line-height:1.55;
     padding-bottom:calc(var(--nav-h) + env(safe-area-inset-bottom, 0px) + 12px);
     -webkit-text-size-adjust:100%;
   }
   .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
-  .muted{color:var(--muted);font-size:12.5px}
+  .muted{color:var(--muted);font-size:var(--t-cap)}
   .hidden{display:none !important}
 
   /* ---------- LOGIN ---------- */
   #loginView{max-width:420px;margin:0 auto;padding:56px 20px}
-  #loginView h1{font-size:30px;letter-spacing:-.02em;margin:0 0 6px}
+  #loginView h1{font-size:26px;letter-spacing:-.02em;margin:0 0 6px}
   #loginView h1 span{color:var(--lemon)}
 
   /* ---------- HEADER ---------- */
@@ -44,7 +52,7 @@
     padding:calc(env(safe-area-inset-top,0px) + 12px) var(--pad) 12px;
     display:flex;align-items:center;justify-content:space-between;gap:12px;
   }
-  header .brand{font-size:17px;font-weight:700;letter-spacing:-.01em}
+  header .brand{font-size:15.5px;font-weight:700;letter-spacing:-.01em}
   header .brand span{color:var(--lemon)}
   header .hdr-actions{display:flex;gap:8px;align-items:center}
   .icon-btn{
@@ -62,33 +70,33 @@
     padding:14px;margin-bottom:10px;
   }
   .card.tight{padding:12px}
-  h2{font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin:22px 0 10px;font-weight:600}
+  h2{font-size:var(--t-label);letter-spacing:.11em;text-transform:uppercase;color:var(--muted);margin:22px 0 10px;font-weight:600}
   h2:first-child{margin-top:14px}
 
   /* ---------- BRIEF ---------- */
   .brief{background:var(--navy);color:#fff;border:0}
-  .brief .headline{font-size:17px;font-weight:600;line-height:1.45;letter-spacing:-.01em}
-  .brief .date{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.55);margin-bottom:8px}
+  .brief .headline{font-size:var(--t-display);font-weight:600;line-height:1.5;letter-spacing:-.01em}
+  .brief .date{font-size:var(--t-label);letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.55);margin-bottom:8px}
   .brief .sec{margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,.15)}
-  .brief .sec-t{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--lemon);margin-bottom:4px}
-  .brief .sec-b{font-size:13.5px;color:rgba(255,255,255,.9)}
+  .brief .sec-t{font-size:var(--t-label);letter-spacing:.08em;text-transform:uppercase;color:var(--lemon);margin-bottom:4px}
+  .brief .sec-b{font-size:var(--t-body);color:rgba(255,255,255,.9)}
   .warn{
     background:rgba(240,208,48,.14);border-left:3px solid var(--lemon);
-    padding:9px 11px;border-radius:0 6px 6px 0;margin-top:10px;font-size:13.5px;
+    padding:9px 11px;border-radius:0 6px 6px 0;margin-top:10px;font-size:var(--t-body);
   }
-  .act-item{font-size:13.5px;color:rgba(255,255,255,.9);padding:3px 0 3px 16px;position:relative}
+  .act-item{font-size:var(--t-body);color:rgba(255,255,255,.9);padding:3px 0 3px 16px;position:relative}
   .act-item:before{content:"→";position:absolute;left:0;color:var(--lemon)}
 
   /* ---------- COMPOSER ---------- */
   textarea,input[type=text],input[type=password],input[type=number],input[type=date],select{
-    width:100%;font-family:inherit;font-size:15px;padding:12px;
+    width:100%;font-family:inherit;font-size:15px;/* input tetap 15px: hindari zoom otomatis iOS */padding:12px;
     border:1px solid var(--line);border-radius:9px;background:#fff;color:var(--text);
   }
   textarea{resize:none;overflow:hidden;min-height:52px;line-height:1.5}
   textarea:focus,input:focus,select:focus{outline:2px solid var(--navy);outline-offset:-1px;border-color:var(--navy)}
 
   button{
-    font-family:inherit;font-size:14.5px;font-weight:600;padding:11px 16px;
+    font-family:inherit;font-size:var(--t-title);font-weight:600;padding:11px 16px;
     border-radius:9px;border:1.5px solid var(--navy);background:var(--navy);color:#fff;cursor:pointer;
   }
   button:active{opacity:.75}
@@ -96,7 +104,7 @@
   button.ghost{background:transparent;color:var(--navy)}
   button.danger{background:var(--danger);border-color:var(--danger)}
   button.danger.ghost{background:transparent;color:var(--danger)}
-  button.tiny{font-size:12.5px;padding:7px 11px;border-radius:7px}
+  button.tiny{font-size:var(--t-cap);padding:7px 11px;border-radius:7px}
   button.full{width:100%}
   .row{display:flex;gap:8px;align-items:flex-start}
   .row>textarea{flex:1}
@@ -119,7 +127,7 @@
   .chips{display:flex;gap:7px;overflow-x:auto;padding:2px 0 10px;-webkit-overflow-scrolling:touch}
   .chips::-webkit-scrollbar{display:none}
   .chip{
-    flex:none;font-size:13px;font-weight:600;padding:7px 13px;border-radius:999px;
+    flex:none;font-size:var(--t-cap);font-weight:600;padding:7px 13px;border-radius:999px;
     border:1px solid var(--line);background:#fff;color:var(--muted);cursor:pointer;
   }
   .chip.on{background:var(--navy);border-color:var(--navy);color:#fff}
@@ -131,18 +139,18 @@
   .item.p2{border-left-color:var(--navy)}
   .item.p3{border-left-color:var(--lemon)}
   .item.p4{border-left-color:var(--line)}
-  .item .kind{font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);font-weight:700}
-  .item .title{font-size:14.5px;font-weight:600;margin-top:3px;line-height:1.45;word-break:break-word}
-  .item .sub{font-size:12.5px;color:var(--muted);margin-top:4px;word-break:break-word}
-  .amount{font-size:19px;font-weight:700;color:var(--navy);margin-top:7px}
-  .jrow{display:flex;justify-content:space-between;gap:10px;font-size:12.5px;padding:3px 0;border-bottom:1px solid var(--line-soft)}
+  .item .kind{font-size:var(--t-label);letter-spacing:.07em;text-transform:uppercase;color:var(--muted);font-weight:700}
+  .item .title{font-size:var(--t-title);font-weight:600;margin-top:4px;line-height:1.45;word-break:break-word}
+  .item .sub{font-size:var(--t-cap);color:var(--muted);margin-top:4px;word-break:break-word}
+  .amount{font-size:var(--t-amount);font-weight:700;color:var(--navy);margin-top:8px;letter-spacing:-.01em}
+  .jrow{display:flex;justify-content:space-between;gap:10px;font-size:var(--t-cap);padding:3px 0;border-bottom:1px solid var(--line-soft)}
   .jrow:last-child{border-bottom:0}
 
   /* ---------- MEMORY ---------- */
   .fact{background:#fff;border:1px solid var(--line);border-radius:10px;padding:13px;margin-bottom:9px}
-  .fact .c{font-size:14.5px;line-height:1.5}
-  .meta{font-size:11.5px;color:var(--muted);margin-top:7px;display:flex;flex-wrap:wrap;gap:9px}
-  .src{background:var(--bg);border-radius:7px;padding:9px;margin-top:9px;font-size:12.5px;color:var(--muted)}
+  .fact .c{font-size:var(--t-title);line-height:1.55}
+  .meta{font-size:var(--t-cap);color:var(--muted);margin-top:7px;display:flex;flex-wrap:wrap;gap:9px}
+  .src{background:var(--bg);border-radius:7px;padding:9px;margin-top:9px;font-size:var(--t-cap);color:var(--muted)}
   .src>div{padding:4px 0;border-bottom:1px solid var(--line)}
   .src>div:last-child{border-bottom:0}
   .bar{height:3px;background:var(--line-soft);border-radius:2px;overflow:hidden;margin-top:7px}
@@ -170,15 +178,15 @@
   /* ---------- MISC ---------- */
   .toast{
     position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--nav-h) + 18px);
-    background:var(--navy);color:#fff;padding:11px 17px;border-radius:9px;font-size:13.5px;
+    background:var(--navy);color:#fff;padding:11px 17px;border-radius:9px;font-size:var(--t-body);
     z-index:90;max-width:88%;box-shadow:0 6px 22px rgba(0,0,0,.2);
   }
   .toast.err{background:var(--danger)}
   .sk{background:linear-gradient(90deg,#eee 25%,#f6f6f6 50%,#eee 75%);background-size:200% 100%;animation:sh 1.3s infinite;border-radius:7px;height:13px;margin-bottom:8px}
   @keyframes sh{0%{background-position:200% 0}100%{background-position:-200% 0}}
-  .empty{text-align:center;color:var(--muted);font-size:13.5px;padding:26px 12px}
+  .empty{text-align:center;color:var(--muted);font-size:var(--t-body);padding:26px 12px}
   .seg{display:flex;gap:6px;margin-bottom:12px}
-  .seg button{flex:1;font-size:12.5px;padding:8px;border-radius:8px;background:#fff;color:var(--muted);border:1px solid var(--line)}
+  .seg button{flex:1;font-size:var(--t-cap);padding:8px;border-radius:8px;background:#fff;color:var(--muted);border:1px solid var(--line)}
   .seg button.on{background:var(--navy);color:#fff;border-color:var(--navy)}
 </style>
 </head>
@@ -791,12 +799,20 @@ async function loadCatatan(){
     $("entryList").innerHTML = list.map(function(e){
       const cls = (e.classifications && e.classifications[0]) || null;
       const label = cls ? (cls.category + "/" + (cls.subcategory || "")) : null;
+      // Tombol klasifikasi HANYA untuk entry yang benar-benar belum tersentuh.
+      // Entry yang sudah disuling atau sengaja dilewati tidak boleh diproses
+      // ulang -- itu sumber memori ganda.
+      const perluTindakan = e.needs_action === true;
+      let status;
+      if (label) status = label;
+      else if (e.skip_reason) status = "dilewati";
+      else if (e.consolidated_at) status = "sudah disuling";
+      else status = "belum diproses";
       return '<div class="card tight">' +
-        '<div style="font-size:14px;line-height:1.5">' + esc((e.content || "").slice(0, 260)) + "</div>" +
-        '<div class="meta"><span>' + esc(timeAgo(e.created_at)) + "</span>" +
-        (label ? "<span>" + esc(label) + "</span>" : "") +
-        "<span>" + esc(e.status || "") + "</span></div>" +
-        (label ? "" : '<div class="btn-row"><button class="tiny ghost" onclick="classifyOne(\'' + esc(e.id) + '\')">Klasifikasi</button></div>') +
+        '<div style="font-size:var(--t-body);line-height:1.55">' + esc((e.content || "").slice(0, 260)) + "</div>" +
+        '<div class="meta"><span>' + esc(timeAgo(e.created_at)) + "</span><span>" + esc(status) + "</span></div>" +
+        (e.skip_reason ? '<div class="muted" style="margin-top:5px">' + esc(e.skip_reason) + "</div>" : "") +
+        (perluTindakan ? '<div class="btn-row"><button class="tiny ghost" onclick="classifyOne(\'' + esc(e.id) + '\')">Klasifikasi</button></div>' : "") +
       "</div>";
     }).join("");
   } catch (err) {
@@ -820,6 +836,21 @@ async function loadKeuangan(){
   }
 }
 function setPeriod(p){ finPeriod = p; renderKeuangan(); }
+
+/* Laporan mengembalikan transaction_lines + chart_of_accounts{code,name}.
+   Sebelumnya frontend membaca t.lines / l.account_name sehingga ringkasan
+   periode selalu Rp 0 padahal transaksinya ada. */
+function lineOf(t){
+  return (t.transaction_lines || t.lines || []).map(function(l){
+    const acc = l.chart_of_accounts || {};
+    return {
+      account_name: l.account_name || acc.name || "",
+      account_code: l.account_code || acc.code || "",
+      debit: Number(l.debit || 0),
+      credit: Number(l.credit || 0)
+    };
+  });
+}
 function renderKeuangan(){
   const r = finData || {};
   const cp = r.cash_position || {};
@@ -837,6 +868,7 @@ function renderKeuangan(){
     return '<button class="' + (finPeriod === o[0] ? "on" : "") + '" onclick="setPeriod(\'' + o[0] + '\')">' + o[1] + "</button>";
   }).join("");
 
+  const ps = r.period_summary || {};
   const txAll = r.recent_transactions || [];
   const days = finPeriod === "minggu" ? 7 : (finPeriod === "bulan" ? 30 : 100000);
   const cutoff = Date.now() - days * 86400000;
@@ -847,7 +879,7 @@ function renderKeuangan(){
 
   let masuk = 0, keluar = 0;
   tx.forEach(function(t){
-    (t.lines || []).forEach(function(l){
+    lineOf(t).forEach(function(l){
       const name = (l.account_name || "").toLowerCase();
       if (name.indexOf("kas") >= 0 || name.indexOf("bank") >= 0) {
         masuk += Number(l.debit || 0);
@@ -859,7 +891,9 @@ function renderKeuangan(){
     '<div style="flex:1"><div style="font-size:16px;font-weight:700;color:var(--ok)">' + rupiah(masuk) + '</div><div class="muted">Uang masuk</div></div>' +
     '<div style="flex:1"><div style="font-size:16px;font-weight:700;color:var(--danger)">' + rupiah(keluar) + '</div><div class="muted">Uang keluar</div></div>' +
     '<div style="flex:1"><div style="font-size:16px;font-weight:700">' + rupiah(masuk - keluar) + '</div><div class="muted">Selisih</div></div>' +
-    '</div><div class="muted" style="margin-top:8px">' + tx.length + " transaksi pada periode ini.</div></div>";
+    '</div><div class="muted" style="margin-top:8px">' + tx.length + " transaksi pada periode ini" +
+    (ps.month_revenue != null ? " \u00b7 bulan berjalan: pendapatan " + rupiah(ps.month_revenue) + ", beban " + rupiah(ps.month_expense) : "") +
+    ".</div></div>";
 
   $("finBalances").innerHTML = (r.account_balances || []).map(function(b){
     const sus = String(b.code) === "9999";
@@ -872,13 +906,13 @@ function renderKeuangan(){
   $("finInventory").innerHTML = (r.inventory_stock || []).map(function(i){
     return '<div class="card tight" style="display:flex;justify-content:space-between;gap:10px">' +
       "<div>" + esc(i.name || i.item_name) + "</div>" +
-      '<div class="mono">' + esc(String(i.quantity != null ? i.quantity : (i.stock || 0))) + " " + esc(i.unit || "") + "</div></div>";
+      '<div class="mono">' + esc(String(i.stock != null ? i.stock : (i.quantity || 0))) + " " + esc(i.unit || "") + "</div></div>";
   }).join("") || '<div class="empty">Belum ada persediaan.</div>';
 
   $("finTx").innerHTML = tx.length ? tx.map(function(t){
-    const lines = (t.lines || []).map(function(l){
+    const lines = lineOf(t).map(function(l){
       const isD = Number(l.debit) > 0;
-      return '<div class="jrow"><span>' + esc(l.account_name || "") + '</span><span class="mono">' +
+      return '<div class="jrow"><span>' + esc(l.account_name || l.account_code) + '</span><span class="mono">' +
              (isD ? "D " + rupiah(l.debit) : "K " + rupiah(l.credit)) + "</span></div>";
     }).join("");
     return '<div class="card tight"><div style="font-size:13.5px;font-weight:600">' + esc(t.description) + "</div>" +
