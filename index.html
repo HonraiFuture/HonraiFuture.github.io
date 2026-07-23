@@ -551,6 +551,8 @@ async function planFromComposer(){
     const r = await call("route-entry", { text: text });
     currentProposal = r.proposal;
     renderProposal(r.proposal);
+    el.value = "";
+    autoGrow(el);
   } catch (err) { fail(err); }
   finally { btn.disabled = false; btn.textContent = "Susun rencana"; }
 }
