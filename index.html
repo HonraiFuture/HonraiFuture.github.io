@@ -884,6 +884,13 @@ function lineOf(t){
     };
   });
 }
+
+/* Bug (23/7): "uang masuk" sempat menghitung kasbon (piutang) sebagai kas,
+   karena deteksi akun kas/bank memakai potongan nama ("Piutang Karyawan/
+   Kasbon" mengandung substring "kas"). Sekarang dicocokkan lewat KODE akun
+   (1000 Kas, 1010 Bank), bukan nama -- tidak ada lagi salah tangkap. */
+const CASH_ACCOUNT_CODES = ["1000", "1010"];
+function isCashAccount(code){ return CASH_ACCOUNT_CODES.indexOf(String(code)) >= 0; }
 function renderKeuangan(){
   const r = finData || {};
   const cp = r.cash_position || {};
@@ -913,8 +920,7 @@ function renderKeuangan(){
   let masuk = 0, keluar = 0;
   tx.forEach(function(t){
     lineOf(t).forEach(function(l){
-      const name = (l.account_name || "").toLowerCase();
-      if (name.indexOf("kas") >= 0 || name.indexOf("bank") >= 0) {
+      if (isCashAccount(l.account_code)) {
         masuk += Number(l.debit || 0);
         keluar += Number(l.credit || 0);
       }
