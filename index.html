@@ -929,8 +929,11 @@ function renderKeuangan(){
     return isNaN(d) ? true : d >= cutoff;
   });
 
-  let masuk = 0, keluar = 0;
+  // Transaksi is_adjustment (koreksi saldo Bank/Kas ke angka riil) dikecualikan
+  // dari "uang masuk/keluar" -- itu koreksi saldo, bukan arus kas sungguhan.
+  let masuk = 0, keluar = 0, adjustmentCount = 0;
   tx.forEach(function(t){
+    if (t.is_adjustment) { adjustmentCount++; return; }
     lineOf(t).forEach(function(l){
       if (isCashAccount(l.account_code)) {
         masuk += Number(l.debit || 0);
@@ -944,6 +947,7 @@ function renderKeuangan(){
     '<div class="stat"><span class="k" style="color:var(--text)">Selisih</span><span class="v">' + rupiah(masuk - keluar) + "</span></div>" +
     '<div class="muted" style="margin-top:10px">' + tx.length + " transaksi pada periode ini" +
     (ps.month_revenue != null ? " \u00b7 bulan berjalan: pendapatan " + rupiah(ps.month_revenue) + ", beban " + rupiah(ps.month_expense) : "") +
+    (adjustmentCount ? " \u00b7 " + adjustmentCount + " penyesuaian saldo tidak dihitung" : "") +
     ".</div></div>";
 
   $("finBalances").innerHTML = (r.account_balances || []).map(function(b){
@@ -966,7 +970,8 @@ function renderKeuangan(){
       return '<div class="jrow"><span>' + esc(l.account_name || l.account_code) + '</span><span class="mono">' +
              (isD ? "D " + rupiah(l.debit) : "K " + rupiah(l.credit)) + "</span></div>";
     }).join("");
-    return '<div class="card tight"><div style="font-size:var(--t-title);font-weight:var(--w-med)">' + esc(t.description) + "</div>" +
+    return '<div class="card tight"><div style="font-size:var(--t-title);font-weight:var(--w-med)">' + esc(t.description) +
+      (t.is_adjustment ? ' <span class="muted" style="color:var(--lemon)">&#9679; penyesuaian</span>' : "") + "</div>" +
       '<div class="muted mono" style="margin-top:3px">' + esc(timeAgo(t.transaction_date || t.date)) + "</div>" +
       (lines ? '<div style="margin-top:8px">' + lines + "</div>" : "") + "</div>";
   }).join("") : '<div class="empty">Tidak ada transaksi pada periode ini.</div>';
