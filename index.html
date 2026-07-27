@@ -991,6 +991,7 @@ function renderKeuangan(){
   flowHtml += '<div style="display:flex;gap:14px;margin-top:14px;padding-top:12px;border-top:1px solid var(--line-soft)">' +
     '<div style="flex:1;min-width:0"><div class="muted">Pendapatan Usaha</div><div class="mono" style="font-size:13px">' + rupiah(ps.operating_revenue) + "</div></div>" +
     '<div style="flex:1;min-width:0"><div class="muted">Beban Usaha</div><div class="mono" style="font-size:13px">' + rupiah(ps.operating_expense) + "</div></div>" +
+    '<div style="flex:1;min-width:0"><div class="muted">Penggunaan Pribadi</div><div class="mono" style="font-size:13px">' + rupiah(ps.personal_use) + "</div></div>" +
     '<div style="flex:1;min-width:0"><div class="muted">Setoran Pemilik</div><div class="mono" style="font-size:13px">' + rupiah(ps.owner_contribution) + "</div></div>" +
     "</div>";
   if (internalTransfer > 0) {
@@ -1006,11 +1007,14 @@ function renderKeuangan(){
 
   $("finBalances").innerHTML = (r.account_balances || []).map(function(b){
     const sus = String(b.code) === "9999";
-    const nonOp = b.is_operating_revenue === false;
+    const nonOpRev = b.is_operating_revenue === false;
+    const nonOpExp = b.is_operating_expense === false;
+    const nonOp = nonOpRev || nonOpExp;
+    const label = nonOpRev ? "bukan pendapatan usaha" : (nonOpExp ? "bukan beban usaha" : "");
     return '<div class="drow"' + (nonOp ? ' style="border-left:3px solid var(--lemon)"' : "") + '><span class="n">' + esc(b.name) +
       (sus ? ' <span style="color:var(--lemon)">&#9679;</span>' : "") +
       (nonOp ? ' <span style="color:var(--lemon)">&#9679;</span>' : "") +
-      "<small>" + esc(b.code) + (nonOp ? " &middot; bukan pendapatan usaha" : "") + "</small></span>" +
+      "<small>" + esc(b.code) + (label ? " &middot; " + label : "") + "</small></span>" +
       '<span class="v">' + rupiah(b.balance) + "</span></div>";
   }).join("") || '<div class="empty">Belum ada saldo.</div>';
 
