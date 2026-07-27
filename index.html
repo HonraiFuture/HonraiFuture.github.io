@@ -870,17 +870,55 @@ async function classifyOne(id){
 }
 
 /* ---------- KEUANGAN ---------- */
+/* Bug (27/7): tombol 7 hari / 30 hari / Semua cuma menyaring daftar transaksi
+   di layar. Ringkasan arus kas tidak ikut berubah, karena get-financial-report
+   selalu dipanggil dengan body kosong sehingga server memakai periode default
+   (bulan berjalan). Akibatnya tombol yang dipilih dan angka yang tampil bisa
+   bicara soal rentang waktu yang berbeda. Sekarang rentangnya dihitung di sini
+   dan dikirim ke server, jadi ringkasan dan daftar selalu satu periode. */
+const PERIOD_OPTS = [["minggu", "7 hari", 7], ["bulan", "30 hari", 30], ["semua", "Semua", null]];
+
+function jakartaToday(){
+  return new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Jakarta" });
+}
+function shiftDays(ymd, n){
+  const d = new Date(ymd + "T00:00:00Z");
+  d.setUTCDate(d.getUTCDate() + n);
+  return d.toISOString().slice(0, 10);
+}
+function periodRange(p){
+  const end = jakartaToday();
+  const opt = PERIOD_OPTS.filter(function(o){ return o[0] === p; })[0] || PERIOD_OPTS[1];
+  const days = opt[2];
+  return days == null
+    ? { period_start: "2000-01-01", period_end: end }
+    : { period_start: shiftDays(end, -(days - 1)), period_end: end };
+}
+function renderPeriodSeg(){
+  $("finPeriodSeg").innerHTML = PERIOD_OPTS.map(function(o){
+    return '<button class="' + (finPeriod === o[0] ? "on" : "") + '" onclick="setPeriod(\'' + o[0] + '\')">' + o[1] + "</button>";
+  }).join("");
+}
+
 async function loadKeuangan(){
   $("finCash").innerHTML = skel(1);
+  $("finFlow").innerHTML = skel(1);
   $("finTx").innerHTML = skel(2);
+  renderPeriodSeg();
   try {
-    finData = await call("get-financial-report", {});
+    finData = await call("get-financial-report", periodRange(finPeriod));
     renderKeuangan();
   } catch (err) {
     $("finCash").innerHTML = '<div class="empty">Gagal memuat: ' + esc((err && err.message) || err) + "</div>";
+    $("finFlow").innerHTML = "";
+    $("finTx").innerHTML = "";
   }
 }
-function setPeriod(p){ finPeriod = p; renderKeuangan(); }
+async function setPeriod(p){
+  if (p === finPeriod) return;
+  finPeriod = p;
+  await loadKeuangan();
+}
 
 /* Laporan mengembalikan transaction_lines + chart_of_accounts{code,name}.
    Sebelumnya frontend membaca t.lines / l.account_name sehingga ringkasan
@@ -915,18 +953,18 @@ function renderKeuangan(){
     '<div class="stat"><span class="k" style="color:var(--text)">Total</span><span class="v">' + rupiah(total) + "</span></div>" +
     "</div>";
 
-  const opts = [["minggu","7 hari"],["bulan","30 hari"],["semua","Semua"]];
-  $("finPeriodSeg").innerHTML = opts.map(function(o){
-    return '<button class="' + (finPeriod === o[0] ? "on" : "") + '" onclick="setPeriod(\'' + o[0] + '\')">' + o[1] + "</button>";
-  }).join("");
+  renderPeriodSeg();
 
   const ps = r.period_summary || {};
   const txAll = r.recent_transactions || [];
-  const days = finPeriod === "minggu" ? 7 : (finPeriod === "bulan" ? 30 : 100000);
-  const cutoff = Date.now() - days * 86400000;
+  // Saring memakai periode yang BENAR-BENAR dipakai server, bukan hitungan
+  // sendiri -- supaya daftar di bawah tidak pernah bicara periode lain
+  // daripada angka ringkasan di atasnya.
+  const startTs = ps.period_start ? new Date(ps.period_start + "T00:00:00").getTime() : -Infinity;
+  const endTs = ps.period_end ? new Date(ps.period_end + "T23:59:59").getTime() : Infinity;
   const tx = txAll.filter(function(t){
     const d = new Date(t.transaction_date || t.date).getTime();
-    return isNaN(d) ? true : d >= cutoff;
+    return isNaN(d) ? true : (d >= startTs && d <= endTs);
   });
 
   // Semua angka ringkasan arus kas HARUS berasal dari period_summary (server),
@@ -994,6 +1032,12 @@ function renderKeuangan(){
       '<div class="muted mono" style="margin-top:3px">' + esc(timeAgo(t.transaction_date || t.date)) + "</div>" +
       (lines ? '<div style="margin-top:8px">' + lines + "</div>" : "") + "</div>";
   }).join("") : '<div class="empty">Tidak ada transaksi pada periode ini.</div>';
+
+  // Server mengirim maksimal 50 transaksi terakhir. Kalau sudah mentok, katakan
+  // apa adanya -- daftar yang diam-diam terpotong pernah bikin angka salah baca.
+  if (txAll.length >= 50) {
+    $("finTx").innerHTML += '<div class="muted" style="margin-top:8px">Daftar dibatasi 50 transaksi terakhir. Angka ringkasan di atas tetap menghitung seluruh transaksi pada periode ini.</div>';
+  }
 }
 
 /* ---------- tarik untuk memuat ulang ---------- */
