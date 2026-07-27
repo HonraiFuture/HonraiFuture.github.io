@@ -556,6 +556,48 @@ async function loadInbox(){
   }
 }
 
+/* Kartu usulan tindakan bisa diputuskan dari jalur lain (mis. tombol
+   Setujui/Tolak di notifikasi Pushcut). Kalau itu terjadi, kartu di layar
+   tidak boleh diam menampilkan tombol Jalankan/Batalkan yang sudah tidak
+   berlaku. Saat halaman kembali aktif/fokus, cek ulang status tiap usulan
+   yang sedang tampil; kalau sudah diputuskan, ganti kartunya jadi ringkasan
+   tanpa perlu refresh manual. */
+async function checkProposalStatuses(){
+  if (currentView !== "Hub") return;
+  const pending = inboxItems.filter(function(i){ return i.kind === "usulan-tindakan"; });
+  if (!pending.length) return;
+  for (const item of pending) {
+    try {
+      const r = await call("check-proposal-status", { proposal_id: item.id });
+      if (r && r.status && r.status !== "pending") {
+        renderDecidedUsulan(item.id, {
+          status: r.status,
+          title: item.title,
+          summary: r.summary || r.message,
+          decided_at: r.decided_at
+        });
+        inboxItems = inboxItems.filter(function(x){ return x.id !== item.id; });
+      }
+    } catch (e) { /* diam saja -- jangan ganggu tampilan kalau cek gagal */ }
+  }
+}
+function renderDecidedUsulan(id, info){
+  const el = $("inbox_" + id);
+  if (!el) return;
+  const done = info.status === "executed";
+  const label = done ? "Sudah dijalankan" : "Sudah dibatalkan";
+  const when = info.decided_at ? timeAgo(info.decided_at) : "";
+  el.innerHTML =
+    '<div class="kind">Usulan tindakan &middot; ' + esc(label) + (when ? " &middot; " + esc(when) : "") + "</div>" +
+    '<div class="title">' + esc(info.title || "") + "</div>" +
+    (info.summary ? '<div class="sub">' + esc(info.summary) + "</div>" : "") +
+    '<div class="muted" style="margin-top:8px">Keputusan sudah diambil dari tempat lain.</div>';
+}
+document.addEventListener("visibilitychange", function(){
+  if (!document.hidden) checkProposalStatuses();
+});
+window.addEventListener("focus", function(){ checkProposalStatuses(); });
+
 const GROUPS = {
   semua: null,
   uang: ["jurnal","gagal-akunting","akun"],
@@ -636,7 +678,7 @@ function renderInboxItem(i){
     actions = '<button class="tiny" onclick="retryAccounting(\'' + esc(i.entry_id) + '\')">Coba lagi</button>';
   }
 
-  return '<div class="item p' + (i.priority || 4) + '">' +
+  return '<div class="item p' + (i.priority || 4) + '" id="inbox_' + id + '">' +
     '<div class="kind">' + esc(i.kind_label || i.kind) + " &middot; " + esc(timeAgo(i.created_at)) + "</div>" +
     '<div class="title">' + esc(i.title) + "</div>" +
     (i.subtitle ? '<div class="sub">' + esc(i.subtitle) + "</div>" : "") +
@@ -720,12 +762,36 @@ async function txDecide(id, decision, amount){
   } catch (err) { fail(err); }
 }
 async function routeDecide(id, decision){
+  // Cek dulu status terbaru di server -- kalau sudah diputuskan lewat jalur
+  // lain (mis. Pushcut), jangan coba eksekusi lagi; beri pesan ramah saja.
+  try {
+    const st = await call("check-proposal-status", { proposal_id: id });
+    if (st && st.status && st.status !== "pending") {
+      const item = inboxItems.filter(function(x){ return x.id === id; })[0];
+      toast(st.status === "executed" ? "Usulan ini sudah dijalankan sebelumnya." : "Usulan ini sudah dibatalkan sebelumnya.");
+      renderDecidedUsulan(id, {
+        status: st.status,
+        title: item ? item.title : "",
+        summary: st.summary || st.message,
+        decided_at: st.decided_at
+      });
+      inboxItems = inboxItems.filter(function(x){ return x.id !== id; });
+      return;
+    }
+  } catch (e) { /* kalau cek status gagal, tetap coba jalur eksekusi seperti biasa */ }
   try {
     const r = await call("route-execute", { proposal_id: id, decision: decision });
     toast(r.message || (r.answer ? "Dijawab." : "Selesai."));
     if (r.answer) toast(r.answer.slice(0, 120));
     loadInbox();
-  } catch (err) { fail(err); }
+  } catch (err) {
+    if (err && err.status === 409) {
+      toast("Usulan ini sudah diputuskan sebelumnya di tempat lain.");
+      loadInbox();
+    } else {
+      fail(err);
+    }
+  }
 }
 async function answerClar(id){
   const el = $("clar_" + id);
