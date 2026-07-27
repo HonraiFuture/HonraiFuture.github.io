@@ -300,14 +300,14 @@
     <div id="viewKeuangan" class="hidden">
       <h2>Posisi kas</h2>
       <div id="finCash"></div>
-      <h2>Ringkasan periode</h2>
-      <div class="seg" id="finPeriodSeg"></div>
-      <div id="finSummary"></div>
+      <h2>Arus bulan ini</h2>
+      <div id="finFlow"></div>
       <h2>Saldo akun</h2>
       <div id="finBalances"></div>
       <h2>Persediaan</h2>
       <div id="finInventory"></div>
       <h2>Transaksi</h2>
+      <div class="seg" id="finPeriodSeg"></div>
       <div id="finTx"></div>
     </div>
 
@@ -929,31 +929,50 @@ function renderKeuangan(){
     return isNaN(d) ? true : d >= cutoff;
   });
 
-  // Transaksi is_adjustment (koreksi saldo Bank/Kas ke angka riil) dikecualikan
-  // dari "uang masuk/keluar" -- itu koreksi saldo, bukan arus kas sungguhan.
-  let masuk = 0, keluar = 0, adjustmentCount = 0;
-  tx.forEach(function(t){
-    if (t.is_adjustment) { adjustmentCount++; return; }
-    lineOf(t).forEach(function(l){
-      if (isCashAccount(l.account_code)) {
-        masuk += Number(l.debit || 0);
-        keluar += Number(l.credit || 0);
-      }
-    });
-  });
-  $("finSummary").innerHTML = '<div class="card">' +
-    '<div class="stat"><span class="k">Uang masuk</span><span class="v in">' + rupiah(masuk) + "</span></div>" +
-    '<div class="stat"><span class="k">Uang keluar</span><span class="v out">' + rupiah(keluar) + "</span></div>" +
-    '<div class="stat"><span class="k" style="color:var(--text)">Selisih</span><span class="v">' + rupiah(masuk - keluar) + "</span></div>" +
-    '<div class="muted" style="margin-top:10px">' + tx.length + " transaksi pada periode ini" +
-    (ps.month_revenue != null ? " \u00b7 bulan berjalan: pendapatan " + rupiah(ps.month_revenue) + ", beban " + rupiah(ps.month_expense) : "") +
-    (adjustmentCount ? " \u00b7 " + adjustmentCount + " penyesuaian saldo tidak dihitung" : "") +
-    ".</div></div>";
+  // Semua angka ringkasan arus kas HARUS berasal dari period_summary (server),
+  // JANGAN pernah dijumlah sendiri dari recent_transactions -- daftar itu kini
+  // berisi sampai 50 transaksi murni untuk tampilan; menjumlahkannya
+  // menghasilkan angka yang salah.
+  const cashIn = Number(ps.cash_in || 0);
+  const cashOut = Number(ps.cash_out || 0);
+  const netFlow = Number(ps.net_cash_flow || 0);
+  const netColor = netFlow >= 0 ? "var(--ok)" : "var(--danger)";
+  const netSign = netFlow >= 0 ? "+" : "-";
+  const internalTransfer = Number(ps.internal_transfer || 0);
+  const nonOpRevenue = Number(ps.non_operating_revenue || 0);
+
+  let flowHtml = '<div class="card">';
+  flowHtml += '<div style="display:flex;gap:16px">' +
+    '<div style="flex:1;min-width:0"><div class="muted">Uang Masuk</div><div class="mono" style="font-size:20px;font-weight:600;color:var(--ok)">' + rupiah(cashIn) + "</div></div>" +
+    '<div style="flex:1;min-width:0"><div class="muted">Uang Keluar</div><div class="mono" style="font-size:20px;font-weight:600;color:var(--danger)">' + rupiah(cashOut) + "</div></div>" +
+    "</div>";
+  flowHtml += '<div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--line-soft)">' +
+    '<div class="muted">Selisih</div>' +
+    '<div class="mono" style="font-size:24px;font-weight:700;color:' + netColor + '">' + netSign + " " + rupiah(Math.abs(netFlow)) + "</div>" +
+    "</div>";
+  flowHtml += '<div style="display:flex;gap:14px;margin-top:14px;padding-top:12px;border-top:1px solid var(--line-soft)">' +
+    '<div style="flex:1;min-width:0"><div class="muted">Pendapatan Usaha</div><div class="mono" style="font-size:13px">' + rupiah(ps.operating_revenue) + "</div></div>" +
+    '<div style="flex:1;min-width:0"><div class="muted">Beban Usaha</div><div class="mono" style="font-size:13px">' + rupiah(ps.operating_expense) + "</div></div>" +
+    '<div style="flex:1;min-width:0"><div class="muted">Setoran Pemilik</div><div class="mono" style="font-size:13px">' + rupiah(ps.owner_contribution) + "</div></div>" +
+    "</div>";
+  if (internalTransfer > 0) {
+    flowHtml += '<div class="muted" style="margin-top:10px">Transfer antar kas sendiri: ' + rupiah(internalTransfer) + " (tidak dihitung sebagai uang masuk maupun keluar)</div>";
+  }
+  if (nonOpRevenue > 0) {
+    flowHtml += '<div class="muted" style="margin-top:6px">Selisih kas dari hitung fisik: ' + rupiah(nonOpRevenue) + " (bukan pendapatan usaha)</div>";
+  }
+  flowHtml += "</div>";
+  flowHtml += '<div class="muted" style="margin-top:8px">Periode ' + esc(ps.period_start || "") + " s/d " + esc(ps.period_end || "") + " - " +
+    esc(String(ps.transactions_counted != null ? ps.transactions_counted : 0)) + " transaksi.</div>";
+  $("finFlow").innerHTML = flowHtml;
 
   $("finBalances").innerHTML = (r.account_balances || []).map(function(b){
     const sus = String(b.code) === "9999";
-    return '<div class="drow"><span class="n">' + esc(b.name) + (sus ? ' <span style="color:var(--lemon)">&#9679;</span>' : "") +
-      "<small>" + esc(b.code) + "</small></span>" +
+    const nonOp = b.is_operating_revenue === false;
+    return '<div class="drow"' + (nonOp ? ' style="border-left:3px solid var(--lemon)"' : "") + '><span class="n">' + esc(b.name) +
+      (sus ? ' <span style="color:var(--lemon)">&#9679;</span>' : "") +
+      (nonOp ? ' <span style="color:var(--lemon)">&#9679;</span>' : "") +
+      "<small>" + esc(b.code) + (nonOp ? " &middot; bukan pendapatan usaha" : "") + "</small></span>" +
       '<span class="v">' + rupiah(b.balance) + "</span></div>";
   }).join("") || '<div class="empty">Belum ada saldo.</div>';
 
