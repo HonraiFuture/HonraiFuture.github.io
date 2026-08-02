@@ -508,7 +508,13 @@ function renderBrief(r){
   el.innerHTML = h;
 }
 
+let briefLoading = false;
 async function loadBrief(){
+  /* Penjaga panggilan bersamaan. loadBrief dipicu dari beberapa jalur
+     (loadHub, dan setelah hampir tiap aksi inbox), sehingga dua permintaan
+     daily-brief bisa terbang berbarengan dan membakar kuota dua kali. */
+  if (briefLoading) return;
+  briefLoading = true;
   const el = $("briefBox");
   try {
     const r = await call("daily-brief", { peek: true });
@@ -523,6 +529,8 @@ async function loadBrief(){
     renderBrief(r);
   } catch (err) {
     el.innerHTML = '<div class="card"><div class="muted">Ringkasan tidak tersedia: ' + esc((err && err.message) || err) + "</div></div>";
+  } finally {
+    briefLoading = false;
   }
 }
 
@@ -540,7 +548,10 @@ async function makeBrief(force){
   }
 }
 
+let inboxLoading = false;
 async function loadInbox(){
+  if (inboxLoading) return;
+  inboxLoading = true;
   $("inboxList").innerHTML = skel(2);
   try {
     const r = await call("get-inbox", { limit: 100 });
@@ -553,6 +564,8 @@ async function loadInbox(){
     else dot.classList.add("hidden");
   } catch (err) {
     $("inboxList").innerHTML = '<div class="empty">Gagal memuat: ' + esc((err && err.message) || err) + "</div>";
+  } finally {
+    inboxLoading = false;
   }
 }
 
@@ -593,10 +606,20 @@ function renderDecidedUsulan(id, info){
     (info.summary ? '<div class="sub">' + esc(info.summary) + "</div>" : "") +
     '<div class="muted" style="margin-top:8px">Keputusan sudah diambil dari tempat lain.</div>';
 }
+/* Browser menyalakan 'visibilitychange' DAN 'focus' berurutan saat tab kembali
+   aktif, jadi checkProposalStatuses() jalan dua kali dan setiap usulan dicek
+   dua kali ke server. Penjaga waktu ini menahan pemicu kedua. */
+let lastStatusCheck = 0;
+function checkStatusesOnce(){
+  const now = Date.now();
+  if (now - lastStatusCheck < 3000) return;
+  lastStatusCheck = now;
+  checkProposalStatuses();
+}
 document.addEventListener("visibilitychange", function(){
-  if (!document.hidden) checkProposalStatuses();
+  if (!document.hidden) checkStatusesOnce();
 });
-window.addEventListener("focus", function(){ checkProposalStatuses(); });
+window.addEventListener("focus", function(){ checkStatusesOnce(); });
 
 const GROUPS = {
   semua: null,
