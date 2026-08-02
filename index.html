@@ -781,17 +781,46 @@ async function routeDecide(id, decision){
   } catch (e) { /* kalau cek status gagal, tetap coba jalur eksekusi seperti biasa */ }
   try {
     const r = await call("route-execute", { proposal_id: id, decision: decision });
-    toast(r.message || (r.answer ? "Dijawab." : "Selesai."));
-    if (r.answer) toast(r.answer.slice(0, 120));
+    if (r.answer) {
+      /* Jawaban ditampilkan PENUH di kartu. Sebelumnya hanya lewat
+         toast(answer.slice(0,120)) -- jawaban recall bisa 3.000-4.000 huruf,
+         jadi selebihnya tersimpan di database tapi tidak pernah terlihat.
+         Jalur composer (execProposal) sudah menampilkan penuh; jalur inbox
+         ini yang tertinggal. */
+      renderAnswerInCard(id, r.answer, r.memory_used);
+      inboxItems = inboxItems.filter(function(x){ return x.id !== id; });
+      loadBrief();
+      return;
+    }
+    toast(r.message || "Selesai.");
     loadInbox();
   } catch (err) {
     if (err && err.status === 409) {
-      toast("Usulan ini sudah diputuskan sebelumnya di tempat lain.");
+      /* 409 kini punya dua sebab. 'executing' berarti tombol ditekan dua kali
+         selagi yang pertama masih berjalan -- route-execute mengklaim usulan
+         secara atomik supaya tidak dijalankan dua kali. */
+      var pesan = String((err && err.message) || "");
+      toast(pesan.indexOf("sedang dikerjakan") >= 0
+        ? "Masih dikerjakan. Tunggu sebentar, jangan tekan lagi."
+        : "Usulan ini sudah diputuskan sebelumnya di tempat lain.");
       loadInbox();
     } else {
       fail(err);
     }
   }
+}
+function renderAnswerInCard(id, answer, memoryUsed){
+  const el = $("inbox_" + id);
+  if (!el) { toast(String(answer).slice(0, 120)); return; }
+  const m = memoryUsed || {};
+  el.innerHTML =
+    '<div class="kind">Jawaban</div>' +
+    '<div style="font-size:var(--t-body);line-height:1.55;margin-top:6px">' +
+      esc(answer).replace(/\n/g, "<br>") + "</div>" +
+    '<div class="meta">' + (m.facts || 0) + " fakta &middot; " + (m.edges || 0) +
+      " relasi &middot; " + (m.episodes || 0) + " episode" +
+      (m.facts_matched != null ? " &middot; " + m.facts_matched + " cocok langsung" : "") +
+    "</div>";
 }
 async function answerClar(id){
   const el = $("clar_" + id);
