@@ -389,7 +389,61 @@ function timeAgo(d){
 }
 
 /* ---------- api ---------- */
+/* Penjaga permintaan kembar di lapisan paling bawah.
+
+   Perbaikan 02/08 hanya menutup jalur BACA (loadBrief/loadInbox/cek usulan).
+   Jalur TULIS dibiarkan terbuka, dan itu terbukti mahal: 28/07 dua jawaban
+   klarifikasi identik lahir berjarak 21 milidetik karena tombol kirim tidak
+   punya penjaga sama sekali. Di layar HP, satu ketukan gemetar sudah cukup.
+
+   Dijaga di sini, bukan di tiap handler, supaya aksi tulis yang dibuat di
+   kemudian hari otomatis ikut terlindungi tanpa perlu diingat satu per satu.
+
+   Dua lapis:
+   - inFlight  : permintaan identik yang MASIH terbang ditolak mentah-mentah.
+   - lastWrite : permintaan tulis identik yang baru saja selesai ditahan
+                 selama jendela pendingin, menangkap ketukan kedua yang
+                 datang tepat setelah yang pertama kelar.
+   Payload yang berbeda tidak pernah saling menghalangi. */
+const WRITE_FNS = [
+  "answer-clarification", "review-transaction", "review-account-proposal",
+  "review-edit", "revise-edit", "process-accounting-entry",
+  "route-execute", "ingest", "memory-edit", "classify", "synthesize"
+];
+const WRITE_COOLDOWN_MS = 2500;
+const inFlight = new Set();
+const lastWrite = new Map();
+
 async function call(fn, payload){
+  const key = fn + "|" + JSON.stringify(payload || {});
+  const isWrite = WRITE_FNS.indexOf(fn) !== -1;
+
+  if (inFlight.has(key)) {
+    throw new Error("Permintaan yang sama masih diproses \u2014 tunggu sebentar.");
+  }
+  if (isWrite) {
+    const prev = lastWrite.get(key);
+    if (prev && (Date.now() - prev) < WRITE_COOLDOWN_MS) {
+      throw new Error("Sudah terkirim barusan. Dicegah supaya tidak dobel.");
+    }
+  }
+  inFlight.add(key);
+
+  try {
+    return await callRaw(fn, payload);
+  } finally {
+    inFlight.delete(key);
+    if (isWrite) {
+      lastWrite.set(key, Date.now());
+      if (lastWrite.size > 60) {
+        const cutoff = Date.now() - WRITE_COOLDOWN_MS;
+        lastWrite.forEach(function(t, k){ if (t < cutoff) lastWrite.delete(k); });
+      }
+    }
+  }
+}
+
+async function callRaw(fn, payload){
   const res = await fetch(BASE_URL + "/" + fn, {
     method: "POST",
     headers: {
