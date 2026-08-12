@@ -929,7 +929,9 @@ async function editDecide(id, decision){
 }
 async function editRevise(id){
   /* Dua langkah, dan urutannya wajib.
-     review-edit yang mengubah status jadi needs_revision SEKALIGUS menyimpan
+     review-edit dengan decision 'refine' -- BUKAN 'needs_revision', itu nama
+     STATUS hasilnya, bukan nama keputusannya. Keputusan yang sah hanya
+     approve/decline/refine. Ia mengubah status jadi needs_revision sekaligus menyimpan
      umpan balik ke revision_history. revise-edit menolak bekerja tanpa
      keduanya: status salah -> 409, riwayat kosong -> 400.
      Versi lama memanggil revise-edit langsung tanpa menanyakan apa pun,
@@ -944,7 +946,7 @@ async function editRevise(id){
     return;
   }
   try {
-    await call("review-edit", { pending_edit_id: id, decision: "needs_revision", revision_feedback: feedback });
+    await call("review-edit", { pending_edit_id: id, decision: "refine", revision_feedback: feedback });
     toast("Menyusun revisi...");
     await call("revise-edit", { pending_edit_id: id });
     toast("Revisi diterapkan."); loadInbox();
