@@ -1273,11 +1273,32 @@ document.addEventListener("touchend", function(e){
 (function(){
   var KUNCI = "honrai_muat_ulang", BATAS = 2;
 
-  function penanda(dok){
+  /* Potret teks kerangka SEBELUM aplikasi merender apa pun.
+     Diambil saat skrip ini di-parse: seluruh body sudah terurai, sementara
+     enterApp() masih menunggu jawaban jaringan sehingga belum menyentuh DOM.
+     Menutup celah yang tersisa: nama tab, judul bagian, dan teks layar masuk
+     tidak ada di CSS maupun JS, jadi perubahannya lolos dari dua penanda lain.
+
+     Sengaja membandingkan textContent, bukan innerHTML. innerHTML kebal
+     terhadap isi tapi rapuh terhadap bentuk -- urutan atribut dan cara
+     serialisasi bisa berbeda antara parser halaman dan DOMParser, dan
+     perbedaan sekecil apa pun akan memicu muat ulang palsu berulang. */
+  var KERANGKA_HIDUP = kerangka(document);
+
+  function kerangka(dok){
+    if(!dok.body) return "";
+    var b = dok.body.cloneNode(true);
+    var buang = b.querySelectorAll("script,style");
+    for(var i = 0; i < buang.length; i++) buang[i].parentNode.removeChild(buang[i]);
+    return (b.textContent || "").replace(/\s+/g, " ").trim();
+  }
+
+  function penanda(dok, teksKerangka){
     var gaya  = dok.querySelector("style");
     var skrip = dok.querySelectorAll("script");
     return (gaya ? gaya.textContent : "") + "\u0000" +
-           (skrip.length ? skrip[skrip.length - 1].textContent : "");
+           (skrip.length ? skrip[skrip.length - 1].textContent : "") + "\u0000" +
+           teksKerangka;
   }
 
   function pesanManual(){
@@ -1295,7 +1316,7 @@ document.addEventListener("touchend", function(e){
       if(!res.ok) return;
       var baru = new DOMParser().parseFromString(await res.text(), "text/html");
 
-      if(penanda(baru) === penanda(document)){ sessionStorage.removeItem(KUNCI); return; }
+      if(penanda(baru, kerangka(baru)) === penanda(document, KERANGKA_HIDUP)){ sessionStorage.removeItem(KUNCI); return; }
 
       /* Pengaman putaran. Kalau reload ternyata tidak menyegarkan cache di versi
          iOS tertentu, tanpa batas ini aplikasi memuat ulang tanpa henti -- lebih
