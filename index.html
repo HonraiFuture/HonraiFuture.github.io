@@ -923,10 +923,26 @@ async function editDecide(id, decision){
   } catch (err) { fail(err); }
 }
 async function editRevise(id){
+  /* Dua langkah, dan urutannya wajib.
+     review-edit yang mengubah status jadi needs_revision SEKALIGUS menyimpan
+     umpan balik ke revision_history. revise-edit menolak bekerja tanpa
+     keduanya: status salah -> 409, riwayat kosong -> 400.
+     Versi lama memanggil revise-edit langsung tanpa menanyakan apa pun,
+     sehingga selalu ditolak 409. Tombol ini tidak pernah benar-benar
+     berfungsi sejak dipasang -- itulah sebabnya revise-edit tercatat tidak
+     pernah dijalankan, bukan karena pemilik tidak memakainya. */
+  const feedback = (prompt("Apa yang perlu diperbaiki?") || "").trim();
+  if (!feedback) return;
   try {
+    await call("review-edit", { pending_edit_id: id, decision: "needs_revision", revision_feedback: feedback });
+    toast("Menyusun revisi...");
     await call("revise-edit", { pending_edit_id: id });
-    toast("Revisi diminta."); loadInbox();
-  } catch (err) { fail(err); }
+    toast("Revisi diterapkan."); loadInbox();
+  } catch (err) {
+    /* loadInbox() tetap dipanggil: kalau langkah pertama berhasil tapi kedua
+       gagal, status sudah needs_revision dan layar harus menunjukkannya. */
+    fail(err); loadInbox();
+  }
 }
 async function retryAccounting(entryId){
   try {
