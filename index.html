@@ -747,6 +747,11 @@ function renderInboxItem(i){
   }
   else if (i.kind === "kode") {
     if (d.pr_url) body += '<div class="sub mono"><a href="' + esc(d.pr_url) + '" target="_blank" rel="noopener">Lihat perubahan di GitHub</a></div>';
+    /* Kotak umpan balik langsung di kartu, bukan prompt(). prompt() tidak
+       muncul di PWA mode standalone iOS, dan kegagalannya senyap: tombol
+       ditekan, tidak terjadi apa-apa, tanpa pesan apa pun. Pola textarea ini
+       sudah terbukti bekerja pada kartu klarifikasi di aplikasi yang sama. */
+    body += '<textarea id="rev_' + id + '" rows="1" placeholder="Kalau ada yang perlu diperbaiki, tulis di sini lalu tekan Minta revisi..." oninput="autoGrow(this)" style="margin-top:9px"></textarea>';
     actions = '<button class="tiny" onclick="editDecide(\'' + id + '\',\'approve\')">Terapkan</button>' +
               '<button class="tiny ghost" onclick="editRevise(\'' + id + '\')">Minta revisi</button>' +
               '<button class="tiny danger ghost" onclick="editDecide(\'' + id + '\',\'decline\')">Tolak</button>';
@@ -931,8 +936,13 @@ async function editRevise(id){
      sehingga selalu ditolak 409. Tombol ini tidak pernah benar-benar
      berfungsi sejak dipasang -- itulah sebabnya revise-edit tercatat tidak
      pernah dijalankan, bukan karena pemilik tidak memakainya. */
-  const feedback = (prompt("Apa yang perlu diperbaiki?") || "").trim();
-  if (!feedback) return;
+  const el = document.getElementById("rev_" + id);
+  const feedback = ((el && el.value) || "").trim();
+  if (!feedback) {
+    toast("Tulis dulu apa yang perlu diperbaiki di kotak itu.");
+    if (el) el.focus();
+    return;
+  }
   try {
     await call("review-edit", { pending_edit_id: id, decision: "needs_revision", revision_feedback: feedback });
     toast("Menyusun revisi...");
