@@ -747,14 +747,27 @@ function renderInboxItem(i){
               '<button class="tiny danger ghost" onclick="acctDecide(\'' + id + '\',\'decline\')">Tolak</button>';
   }
   else if (i.kind === "kode") {
+    /* Sengaja TIDAK ada tombol "Minta revisi" di sini.
+       Alurnya searah: tulis instruksi -> terapkan -> LIHAT hasilnya -> kalau
+       meleset, kirim instruksi baru.
+
+       Alasannya bukan teknis. Meminta pemilik memutuskan sebelum melihat
+       berarti meminta yang mustahil: tidak ada manusia yang bisa menilai warna,
+       ukuran, atau tata letak dari sebuah kalimat. "Biru tua" bisa berarti
+       seratus warna. Ringkasan sebagus apa pun tidak menutup jurang itu.
+       Lebih buruk lagi, ia menumbuhkan kebiasaan menekan Terapkan tanpa
+       membaca -- karena membacanya memang tidak menolong.
+
+       Yang membuat alur searah ini aman sudah ada: gerbang mutu menahan
+       kerusakan struktural sebelum commit, dan pemeriksa versi memastikan
+       hasilnya benar-benar sampai ke layar. Tanpa keduanya, "terapkan lalu
+       lihat" tidak mungkin.
+
+       Ringkasan di judul kartu tetap dipertahankan, tapi fungsinya bergeser:
+       bukan dasar memutuskan, melainkan PENUNJUK ARAH ke mana harus melihat
+       setelah diterapkan. */
     if (d.pr_url) body += '<div class="sub mono"><a href="' + esc(d.pr_url) + '" target="_blank" rel="noopener">Lihat perubahan di GitHub</a></div>';
-    /* Kotak umpan balik langsung di kartu, bukan prompt(). prompt() tidak
-       muncul di PWA mode standalone iOS, dan kegagalannya senyap: tombol
-       ditekan, tidak terjadi apa-apa, tanpa pesan apa pun. Pola textarea ini
-       sudah terbukti bekerja pada kartu klarifikasi di aplikasi yang sama. */
-    body += '<textarea id="rev_' + id + '" rows="1" placeholder="Kalau ada yang perlu diperbaiki, tulis di sini lalu tekan Minta revisi..." oninput="autoGrow(this)" style="margin-top:9px"></textarea>';
     actions = '<button class="tiny" onclick="editDecide(\'' + id + '\',\'approve\')">Terapkan</button>' +
-              '<button class="tiny ghost" onclick="editRevise(\'' + id + '\')">Minta revisi</button>' +
               '<button class="tiny danger ghost" onclick="editDecide(\'' + id + '\',\'decline\')">Tolak</button>';
   }
   else if (i.kind === "gagal-akunting") {
@@ -928,35 +941,11 @@ async function editDecide(id, decision){
     toast(decision === "approve" ? "Perubahan diterapkan." : "Ditolak."); loadInbox();
   } catch (err) { fail(err); }
 }
-async function editRevise(id){
-  /* Dua langkah, dan urutannya wajib.
-     review-edit dengan decision 'refine' -- BUKAN 'needs_revision', itu nama
-     STATUS hasilnya, bukan nama keputusannya. Keputusan yang sah hanya
-     approve/decline/refine. Ia mengubah status jadi needs_revision sekaligus menyimpan
-     umpan balik ke revision_history. revise-edit menolak bekerja tanpa
-     keduanya: status salah -> 409, riwayat kosong -> 400.
-     Versi lama memanggil revise-edit langsung tanpa menanyakan apa pun,
-     sehingga selalu ditolak 409. Tombol ini tidak pernah benar-benar
-     berfungsi sejak dipasang -- itulah sebabnya revise-edit tercatat tidak
-     pernah dijalankan, bukan karena pemilik tidak memakainya. */
-  const el = document.getElementById("rev_" + id);
-  const feedback = ((el && el.value) || "").trim();
-  if (!feedback) {
-    toast("Tulis dulu apa yang perlu diperbaiki di kotak itu.");
-    if (el) el.focus();
-    return;
-  }
-  try {
-    await call("review-edit", { pending_edit_id: id, decision: "refine", revision_feedback: feedback });
-    toast("Menyusun revisi...");
-    await call("revise-edit", { pending_edit_id: id });
-    toast("Revisi diterapkan."); loadInbox();
-  } catch (err) {
-    /* loadInbox() tetap dipanggil: kalau langkah pertama berhasil tapi kedua
-       gagal, status sudah needs_revision dan layar harus menunjukkannya. */
-    fail(err); loadInbox();
-  }
-}
+/* editRevise() dibuang 13/8: tombolnya dicabut dari kartu (lihat alasan di
+   blok kartu "kode"). Edge Function revise-edit SENGAJA dipertahankan sebagai
+   jalur pintu belakang lewat sesi Claude -- berguna untuk menyempurnakan tanpa
+   menumpuk commit di main, tapi bukan sesuatu yang bisa diputuskan lewat layar
+   HP tanpa melihat hasilnya lebih dulu. */
 async function retryAccounting(entryId){
   try {
     await call("process-accounting-entry", { entry_id: entryId });
