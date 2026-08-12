@@ -1252,5 +1252,67 @@ document.addEventListener("touchend", function(e){
     .catch(function(){ $("loginMsg").textContent = "Kunci tersimpan tidak berlaku. Masukkan ulang."; });
 })();
 </script>
+<script>
+/* Pemeriksa versi (12/8/2026).
+
+   PWA iOS menyimpan index.html di wadah cache tersendiri, terpisah dari Safari.
+   Membersihkan Safari tidak menyentuhnya. Akibatnya perubahan tampilan sampai ke
+   server tapi tidak pernah terlihat di aplikasi yang dipakai sehari-hari --
+   terbukti pada tombol Simpan: hijau di Safari, tetap navy di PWA. Efeknya
+   melumpuhkan: pemilik mengubah tampilannya sendiri lewat pipeline edit, semua
+   lapisan melapor sukses, layarnya tidak berubah.
+
+   Sengaja TANPA berkas versi terpisah. Berkas semacam itu harus diperbarui tiap
+   deploy; sekali lupa -- atau saat AI yang mengedit tidak tahu harus
+   memperbaruinya -- pemeriksanya diam-diam berhenti berguna. Persis jenis
+   kegagalan senyap yang sedang diberantas di seluruh sistem ini.
+
+   Gantinya halaman membandingkan DIRINYA dengan yang ada di server: isi blok
+   blok style dan blok script terakhir. Keduanya teks statis yang tidak pernah diubah
+   JS saat berjalan, jadi beda = halaman yang sedang tampil sudah basi.
+   Tidak ada yang bisa lupa diperbarui. */
+(function(){
+  var KUNCI = "honrai_muat_ulang", BATAS = 2;
+
+  function penanda(dok){
+    var gaya  = dok.querySelector("style");
+    var skrip = dok.querySelectorAll("script");
+    return (gaya ? gaya.textContent : "") + "\u0000" +
+           (skrip.length ? skrip[skrip.length - 1].textContent : "");
+  }
+
+  function pesanManual(){
+    var bar = document.createElement("div");
+    bar.style.cssText = "position:fixed;left:0;right:0;bottom:0;z-index:9999;" +
+      "background:#f0d030;color:#152238;padding:12px 14px;font-size:13px;line-height:1.4";
+    bar.textContent = "Versi baru tersedia tapi tidak bisa dimuat otomatis. " +
+      "Hapus ikon Honrai dari Home Screen, lalu tambahkan lagi dari Safari.";
+    document.body.appendChild(bar);
+  }
+
+  async function cek(){
+    try{
+      var res = await fetch(location.pathname + "?cek=" + Date.now(), { cache: "no-store" });
+      if(!res.ok) return;
+      var baru = new DOMParser().parseFromString(await res.text(), "text/html");
+
+      if(penanda(baru) === penanda(document)){ sessionStorage.removeItem(KUNCI); return; }
+
+      /* Pengaman putaran. Kalau reload ternyata tidak menyegarkan cache di versi
+         iOS tertentu, tanpa batas ini aplikasi memuat ulang tanpa henti -- lebih
+         buruk daripada masalah aslinya. Setelah dua kali gagal: berhenti, dan
+         beri tahu manusianya. Memberi tahu lebih baik daripada berputar diam. */
+      var n = Number(sessionStorage.getItem(KUNCI) || 0);
+      if(n >= BATAS){ pesanManual(); return; }
+      sessionStorage.setItem(KUNCI, String(n + 1));
+
+      try { await fetch(location.pathname, { cache: "reload" }); } catch(e){}
+      location.reload();
+    }catch(e){ /* offline atau jaringan putus: diamkan, jangan ganggu pemakaian */ }
+  }
+
+  window.addEventListener("load", function(){ setTimeout(cek, 1200); });
+})();
+</script>
 </body>
 </html>
